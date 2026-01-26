@@ -1,9 +1,11 @@
-import { useDocumentStore, useEditorStore } from '../store'
+import { useDocumentStore, useEditorStore, useUIStore } from '../store'
 import CodeMirrorEditor from './CodeMirrorEditor'
+import { markdownTransformer } from '../utils/markdownTransformer'
 
 export default function EditorContainer() {
   const { content, setContent, saveToStack } = useDocumentStore()
   const { setSelection, setCurrentBlockType } = useEditorStore()
+  const { showPreview, togglePreview } = useUIStore()
 
   const handleChange = (newContent: string) => {
     setContent(newContent)
@@ -30,14 +32,38 @@ export default function EditorContainer() {
     return 'paragraph'
   }
 
+  const previewHtml = markdownTransformer.transform(content)
+
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, marginRight: '10px' }}>
-        <CodeMirrorEditor
-          content={content}
-          onChange={handleChange}
-          onSelectionChange={handleSelectionChange}
-        />
+    <div style={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
+      <div style={{ marginBottom: '10px', padding: '0 20px' }}>
+        <button onClick={togglePreview}>
+          {showPreview ? 'Hide Preview' : 'Show Preview'}
+        </button>
+      </div>
+      <div style={{ display: 'flex', flex: 1, height: '100%' }}>
+        <div style={{ flex: 1, marginRight: showPreview ? '10px' : '0' }}>
+          {showPreview && (
+            <div
+              style={{
+                border: '1px solid #e0e0e0',
+                borderRadius: '4px',
+                padding: '20px',
+                height: '100%',
+                overflow: 'auto',
+              }}
+              className="markdown-preview"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          )}
+        </div>
+        <div style={{ flex: 1 }}>
+          <CodeMirrorEditor
+            content={content}
+            onChange={handleChange}
+            onSelectionChange={handleSelectionChange}
+          />
+        </div>
       </div>
     </div>
   )

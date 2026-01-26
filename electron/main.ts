@@ -1,5 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import path from 'path'
+import { registerFileHandlers } from './fileOperations'
+import { createMenu } from './menu'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -24,7 +26,11 @@ function createWindow() {
   })
 }
 
-app.on('ready', createWindow)
+app.on('ready', () => {
+  createWindow()
+  registerFileHandlers()
+  createMenu()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
