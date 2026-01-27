@@ -8,13 +8,14 @@ function App() {
   const { toggleSidebar } = useUIStore()
 
   React.useEffect(() => {
-    setInitialContent('# Welcome to Typora\n\nStart typing your Markdown here...\n\n## Features\n\n- **Bold** and *italic* text\n- `Code` blocks\n- [Links](https://example.com)\n\nAnd more to come!')
+    setInitialContent('# Mermaid Test\n\n```mermaid\ngraph LR\n    A[Start] --> B[Process]\n    B --> C[End]\n```\n\nThis should render as a diagram above.')
   }, [setInitialContent])
 
   React.useEffect(() => {
     const handleNew = () => {
       setFilePath(null)
       setModified(false)
+      setInitialContent('# Mermaid Test\n\n```mermaid\ngraph LR\n    A[Start] --> B[Process]\n    B --> C[End]\n```\n\nThis should render as a diagram above.')
     }
 
     const handleOpenRequest = async () => {
@@ -45,32 +46,21 @@ function App() {
       }
     }
 
-    const handleMenuAction = async (_event: Electron.IpcRendererEvent, channel: string) => {
-      switch (channel) {
-        case 'file:new':
-          handleNew()
-          break
-        case 'file:open-request':
-          await handleOpenRequest()
-          break
-        case 'file:save-request':
-          await handleSaveRequest()
-          break
-        case 'file:save-as-request':
-          await handleSaveAsRequest()
-          break
-      }
-    }
+    const newListener = () => handleNew()
+    const openListener = () => handleOpenRequest()
+    const saveListener = () => handleSaveRequest()
+    const saveAsListener = () => handleSaveAsRequest()
 
-    const listener = (_event: Electron.IpcRendererEvent, channel: string) => {
-      handleMenuAction(_event, channel)
-    }
-
-    const { ipcRenderer } = require('electron')
-    ipcRenderer.on('menu-action', listener)
+    window.electronAPI.on('file:new', newListener)
+    window.electronAPI.on('file:open-request', openListener)
+    window.electronAPI.on('file:save-request', saveListener)
+    window.electronAPI.on('file:save-as-request', saveAsListener)
 
     return () => {
-      ipcRenderer.removeListener('menu-action', listener)
+      window.electronAPI.removeListener('file:new', newListener)
+      window.electronAPI.removeListener('file:open-request', openListener)
+      window.electronAPI.removeListener('file:save-request', saveListener)
+      window.electronAPI.removeListener('file:save-as-request', saveAsListener)
     }
   }, [filePath, setFilePath, setModified, setInitialContent])
 
