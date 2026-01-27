@@ -7,12 +7,16 @@ interface UIState {
   showSidebar: boolean
   showTableOfContents: boolean
   showPreview: boolean
+  showEditor: boolean
+  sliderPosition: number
   setTheme: (theme: string) => void
   setDarkMode: (dark: boolean) => void
   setViewMode: (mode: 'normal' | 'focus' | 'typewriter') => void
   toggleSidebar: () => void
   toggleTableOfContents: () => void
   togglePreview: () => void
+  toggleEditor: () => void
+  setSliderPosition: (position: number) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -22,6 +26,8 @@ export const useUIStore = create<UIState>((set) => ({
   showSidebar: false,
   showTableOfContents: false,
   showPreview: true,
+  showEditor: true,
+  sliderPosition: 50,
 
   setTheme: (theme: string) => set({ theme }),
   setDarkMode: (dark: boolean) => set({ darkMode: dark }),
@@ -29,4 +35,6 @@ export const useUIStore = create<UIState>((set) => ({
   toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
   toggleTableOfContents: () => set((state) => ({ showTableOfContents: !state.showTableOfContents })),
   togglePreview: () => set((state) => ({ showPreview: !state.showPreview })),
+  toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
+  setSliderPosition: (position: number) => set({ sliderPosition: position }),
 }))

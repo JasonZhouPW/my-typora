@@ -62,7 +62,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   redo: () => {
-    const { undoStack, redoStack, content } = get()
+    const { undoStack, redoStack } = get()
     if (redoStack.length > 0) {
       const newRedoStack = redoStack.slice(0, -1)
       const newContent = newRedoStack[newRedoStack.length - 1]
