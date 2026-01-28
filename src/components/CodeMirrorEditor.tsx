@@ -4,6 +4,7 @@ import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { oneDark } from '@codemirror/theme-one-dark'
+import { bracketMatching } from '@codemirror/language'
 
 interface CodeMirrorEditorProps {
   content: string
@@ -40,6 +41,7 @@ export default function CodeMirrorEditor({
       doc: content,
       extensions: [
         markdown({ codeLanguages: languages }),
+        bracketMatching(),
         themeCompartment.of(isDarkMode ? oneDark : []),
         EditorView.theme({
           '&': { height: '100%', fontSize: '16px' },
@@ -81,7 +83,7 @@ export default function CodeMirrorEditor({
   }, [isDarkMode])
 
   useEffect(() => {
-    if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
+    if (viewRef.current && !viewRef.current.hasFocus && content !== viewRef.current.state.doc.toString()) {
       const transaction = viewRef.current.state.update({
         changes: { from: 0, to: viewRef.current.state.doc.length, insert: content },
       })
