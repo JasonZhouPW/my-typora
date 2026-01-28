@@ -5,6 +5,7 @@ interface UIState {
   darkMode: boolean
   viewMode: 'normal' | 'focus' | 'typewriter'
   showSidebar: boolean
+  sidebarWidth: number
   showTableOfContents: boolean
   showPreview: boolean
   showEditor: boolean
@@ -13,6 +14,7 @@ interface UIState {
   setDarkMode: (dark: boolean) => void
   setViewMode: (mode: 'normal' | 'focus' | 'typewriter') => void
   toggleSidebar: () => void
+  setSidebarWidth: (width: number) => void
   toggleTableOfContents: () => void
   togglePreview: () => void
   toggleEditor: () => void
@@ -24,6 +26,7 @@ export const useUIStore = create<UIState>((set) => ({
   darkMode: false,
   viewMode: 'normal',
   showSidebar: false,
+  sidebarWidth: 250,
   showTableOfContents: false,
   showPreview: true,
   showEditor: true,
@@ -33,6 +36,7 @@ export const useUIStore = create<UIState>((set) => ({
   setDarkMode: (dark: boolean) => set({ darkMode: dark }),
   setViewMode: (mode) => set({ viewMode: mode }),
   toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
+  setSidebarWidth: (width: number) => set({ sidebarWidth: width }),
   toggleTableOfContents: () => set((state) => ({ showTableOfContents: !state.showTableOfContents })),
   togglePreview: () => set((state) => ({ showPreview: !state.showPreview })),
   toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
