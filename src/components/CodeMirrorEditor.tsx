@@ -1,14 +1,18 @@
-import { useEffect, useRef } from 'react'
-import { EditorView } from '@codemirror/view'
+import { useEffect, useRef, useState } from 'react'
+import { EditorView, Compartment } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
+import { oneDark } from '@codemirror/theme-one-dark'
 
 interface CodeMirrorEditorProps {
   content: string
   onChange: (content: string) => void
   onSelectionChange?: (from: number, to: number) => void
 }
+
+// Create a compartment for managing the theme dynamically
+const themeCompartment = new Compartment()
 
 export default function CodeMirrorEditor({
   content,
@@ -17,6 +21,17 @@ export default function CodeMirrorEditor({
 }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
+  const [isDarkMode, setIsDarkMode] = useState(
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  )
+
+  // Listen for system dark mode preference changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches)
+    mediaQuery.addEventListener('change', handler)
+    return () => mediaQuery.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -25,6 +40,7 @@ export default function CodeMirrorEditor({
       doc: content,
       extensions: [
         markdown({ codeLanguages: languages }),
+        themeCompartment.of(isDarkMode ? oneDark : []),
         EditorView.theme({
           '&': { height: '100%', fontSize: '16px' },
           '.cm-scroller': { overflow: 'auto' },
@@ -54,6 +70,15 @@ export default function CodeMirrorEditor({
       viewRef.current = null
     }
   }, [])
+
+  // Handle theme changes dynamically
+  useEffect(() => {
+    if (viewRef.current) {
+      viewRef.current.dispatch({
+        effects: themeCompartment.reconfigure(isDarkMode ? oneDark : []),
+      })
+    }
+  }, [isDarkMode])
 
   useEffect(() => {
     if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
