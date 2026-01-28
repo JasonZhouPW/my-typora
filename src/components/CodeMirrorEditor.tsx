@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import { EditorView, Compartment } from '@codemirror/view'
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
+import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { bracketMatching } from '@codemirror/language'
+import { oneDark } from '@codemirror/theme-one-dark'
+
+export interface CodeMirrorEditorRef {
+  insertText: (text: { before: string; after: string } | string) => void
+}
 
 interface CodeMirrorEditorProps {
   content: string
@@ -12,27 +16,39 @@ interface CodeMirrorEditorProps {
   onSelectionChange?: (from: number, to: number) => void
 }
 
-// Create a compartment for managing the theme dynamically
-const themeCompartment = new Compartment()
-
-export default function CodeMirrorEditor({
+const CodeMirrorEditor = forwardRef<CodeMirrorEditorRef, CodeMirrorEditorProps>(({
   content,
   onChange,
   onSelectionChange,
-}: CodeMirrorEditorProps) {
+}, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
-  const [isDarkMode, setIsDarkMode] = useState(
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  )
 
-  // Listen for system dark mode preference changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches)
-    mediaQuery.addEventListener('change', handler)
-    return () => mediaQuery.removeEventListener('change', handler)
-  }, [])
+  const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+  useImperativeHandle(ref, () => ({
+    insertText: (text) => {
+      if (!viewRef.current) return
+
+      const view = viewRef.current
+      const { from, to } = view.state.selection.main
+
+      if (typeof text === 'string') {
+        view.dispatch({
+          changes: { from, to, insert: text },
+          selection: { anchor: from + text.length },
+        })
+      } else {
+        const selectedText = view.state.doc.sliceString(from, to)
+        view.dispatch({
+          changes: { from, to, insert: text.before + selectedText + text.after },
+          selection: { anchor: from + text.before.length + selectedText.length },
+        })
+      }
+
+      onChange(view.state.doc.toString())
+    },
+  }))
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -42,8 +58,7 @@ export default function CodeMirrorEditor({
       extensions: [
         markdown({ codeLanguages: languages }),
         bracketMatching(),
-        themeCompartment.of(isDarkMode ? oneDark : []),
-        EditorView.theme({
+        isDarkMode ? oneDark : EditorView.theme({
           '&': { height: '100%', fontSize: '16px' },
           '.cm-scroller': { overflow: 'auto' },
           '.cm-content': { padding: '20px' },
@@ -71,19 +86,10 @@ export default function CodeMirrorEditor({
       view.destroy()
       viewRef.current = null
     }
-  }, [])
-
-  // Handle theme changes dynamically
-  useEffect(() => {
-    if (viewRef.current) {
-      viewRef.current.dispatch({
-        effects: themeCompartment.reconfigure(isDarkMode ? oneDark : []),
-      })
-    }
   }, [isDarkMode])
 
   useEffect(() => {
-    if (viewRef.current && !viewRef.current.hasFocus && content !== viewRef.current.state.doc.toString()) {
+    if (viewRef.current && content !== viewRef.current.state.doc.toString()) {
       const transaction = viewRef.current.state.update({
         changes: { from: 0, to: viewRef.current.state.doc.length, insert: content },
       })
@@ -102,4 +108,7 @@ export default function CodeMirrorEditor({
       }}
     />
   )
-}
+})
+
+CodeMirrorEditor.displayName = 'CodeMirrorEditor'
+export default CodeMirrorEditor
