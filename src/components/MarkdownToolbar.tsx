@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useUIStore } from '../store'
 import TableDialog from './TableDialog'
 
@@ -23,6 +23,26 @@ const BUTTONS = [
   { label: 'Image', action: () => ({ before: '![', after: '](url)' }), title: 'Image' },
 ]
 
+const baseButtonStyle = {
+  padding: '6px 10px',
+  fontSize: '13px',
+  minWidth: '32px',
+  border: '1px solid #e0e0e0',
+  borderRadius: '4px',
+  backgroundColor: 'white',
+  cursor: 'pointer',
+}
+
+const primaryButtonStyle = {
+  padding: '6px 12px',
+  fontSize: '14px',
+  border: 'none',
+  borderRadius: '4px',
+  backgroundColor: '#1976d2',
+  color: 'white',
+  cursor: 'pointer',
+}
+
 export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarProps) {
   const { showPreview, togglePreview, showEditor, toggleEditor } = useUIStore()
   const [showTableDialog, setShowTableDialog] = useState(false)
@@ -36,13 +56,31 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
     }
   }, [showLinkDialog])
 
-  const handleInsertLink = () => {
+  const handleShowLinkDialog = useCallback(() => {
+    setShowLinkDialog(true)
+  }, [])
+
+  const handleInsertLink = useCallback(() => {
     if (linkText) {
       onInsertMarkdown(`[${linkText}](${linkText})`)
     }
     setShowLinkDialog(false)
     setLinkText('')
-  }
+  }, [linkText, onInsertMarkdown])
+
+  const handleCancelLink = useCallback(() => {
+    setShowLinkDialog(false)
+    setLinkText('')
+  }, [])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleInsertLink()
+    if (e.key === 'Escape') handleCancelLink()
+  }, [handleInsertLink, handleCancelLink])
+
+  const handleButtonClick = useCallback((action: () => any) => {
+    return () => onInsertMarkdown(action())
+  }, [onInsertMarkdown])
 
   return (
     <>
@@ -58,16 +96,11 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
         {BUTTONS.map((btn, i) => (
           <button
             key={i}
-            onClick={() => onInsertMarkdown(btn.action())}
+            onClick={btn.label === 'Link' ? handleShowLinkDialog : handleButtonClick(btn.action)}
             title={btn.title}
+            aria-label={btn.title}
             style={{
-              padding: '6px 10px',
-              fontSize: '13px',
-              minWidth: '32px',
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
+              ...baseButtonStyle,
               fontWeight: btn.label.startsWith('H') ? 600 : 400,
             }}
           >
@@ -77,42 +110,23 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
         <button
           onClick={() => setShowTableDialog(true)}
           title="Table"
-          style={{
-            padding: '6px 10px',
-            fontSize: '13px',
-            minWidth: '32px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            backgroundColor: 'white',
-            cursor: 'pointer',
-          }}
+          aria-label="Insert table"
+          style={baseButtonStyle}
         >
           Table
         </button>
         <div style={{ flex: 1 }} />
         <button
           onClick={togglePreview}
-          style={{
-            padding: '6px 12px',
-            fontSize: '13px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            backgroundColor: 'white',
-            cursor: 'pointer',
-          }}
+          aria-label={showPreview ? 'Hide preview' : 'Show preview'}
+          style={baseButtonStyle}
         >
           {showPreview ? 'Hide Preview' : 'Show Preview'}
         </button>
         <button
           onClick={toggleEditor}
-          style={{
-            padding: '6px 12px',
-            fontSize: '13px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            backgroundColor: 'white',
-            cursor: 'pointer',
-          }}
+          aria-label={showEditor ? 'Hide editor' : 'Show editor'}
+          style={baseButtonStyle}
         >
           {showEditor ? 'Hide Editor' : 'Show Editor'}
         </button>
@@ -146,14 +160,9 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
               type="text"
               value={linkText}
               onChange={(e) => setLinkText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleInsertLink()
-                if (e.key === 'Escape') {
-                  setShowLinkDialog(false)
-                  setLinkText('')
-                }
-              }}
+              onKeyDown={handleKeyDown}
               placeholder="Enter link text..."
+              aria-label="Link text"
               style={{
                 width: '100%',
                 padding: '8px',
@@ -165,32 +174,16 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
             />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => {
-                  setShowLinkDialog(false)
-                  setLinkText('')
-                }}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '14px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                }}
+                onClick={handleCancelLink}
+                aria-label="Cancel link insertion"
+                style={baseButtonStyle}
               >
                 Cancel
               </button>
               <button
                 onClick={handleInsertLink}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '14px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  cursor: 'pointer',
-                }}
+                aria-label="Insert link"
+                style={primaryButtonStyle}
               >
                 Insert
               </button>
