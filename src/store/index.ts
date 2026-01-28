@@ -1,3 +1,5 @@
 export { useDocumentStore } from './documentStore'
 export { useUIStore } from './uiStore'
 export { useEditorStore } from './editorStore'
+export { useFileTreeStore } from './fileTreeStore'
+export type { TreeNode } from './fileTreeStore'
