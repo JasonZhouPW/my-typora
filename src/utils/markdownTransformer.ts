@@ -16,7 +16,7 @@ export class MarkdownTransformer {
     // Replace mermaid code blocks with placeholder divs
     const mermaidDiagrams = html.match(/<pre><code class="language-mermaid">[\s\S]*?<\/code><\/pre>/g)
     if (mermaidDiagrams) {
-      mermaidDiagrams.forEach((_, index) => {
+      mermaidDiagrams.forEach(() => {
         html = html.replace(
           /<pre><code class="language-mermaid">[\s\S]*?<\/code><\/pre>/,
           `<div class="mermaid-diagram" style="display: flex; justify-content: center; align-items: center; min-height: 100px; width: 100%; padding: 10px;"></div>`
