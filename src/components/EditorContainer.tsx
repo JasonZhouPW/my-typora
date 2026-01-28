@@ -1,6 +1,8 @@
-import React from 'react'
-import { useDocumentStore, useEditorStore, useUIStore } from '../store'
-import CodeMirrorEditor from './CodeMirrorEditor'
+import React, { useRef } from 'react'
+import { useDocumentStore, useEditorStore, useUIStore, useFileTreeStore } from '../store'
+import CodeMirrorEditor, { type CodeMirrorEditorRef } from './CodeMirrorEditor'
+import FileExplorer from './FileExplorer'
+import MarkdownToolbar from './MarkdownToolbar'
 import { markdownTransformer } from '../utils/markdownTransformer'
 import mermaid from 'mermaid'
 
@@ -10,10 +12,13 @@ mermaid.initialize({
 })
 
 export default function EditorContainer() {
-  const { content, setContent, saveToStack } = useDocumentStore()
+  const { content, setContent, saveToStack, setFilePath, setInitialContent } = useDocumentStore()
   const { setSelection, setCurrentBlockType } = useEditorStore()
-  const { showPreview, togglePreview, showEditor, toggleEditor, sliderPosition, setSliderPosition } = useUIStore()
-  const [isDragging, setIsDragging] = React.useState(false)
+  const { showSidebar, sidebarWidth, setSidebarWidth, showPreview, showEditor, sliderPosition, setSliderPosition } = useUIStore()
+  const { setSelectedFile } = useFileTreeStore()
+  const [isDraggingDivider, setIsDraggingDivider] = React.useState(false)
+  const [isDraggingSidebar, setIsDraggingSidebar] = React.useState(false)
+  const editorRef = useRef<CodeMirrorEditorRef>(null)
 
   const handleChange = (newContent: string) => {
     setContent(newContent)
@@ -40,35 +45,63 @@ export default function EditorContainer() {
     return 'paragraph'
   }
 
+  const handleFileSelect = async (path: string) => {
+    try {
+      const fileContent = await window.electronAPI.fileTree.readFile(path)
+      setInitialContent(fileContent)
+      setFilePath(path)
+      setSelectedFile(path)
+    } catch (error) {
+      console.error('Error loading file:', error)
+    }
+  }
+
   const previewHtml = markdownTransformer.transform(content)
   const mermaidCode = markdownTransformer.extractMermaidCode(content)
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
+  const handleDividerMouseDown = (e: React.MouseEvent) => {
+    setIsDraggingDivider(true)
+    e.preventDefault()
+  }
+
+  const handleSidebarMouseDown = (e: React.MouseEvent) => {
+    setIsDraggingSidebar(true)
     e.preventDefault()
   }
 
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return
+      if (isDraggingDivider) {
+        const container = document.querySelector('.editor-layout') as HTMLElement
+        if (!container) return
 
-      const container = document.querySelector('.editor-layout') as HTMLElement
-      if (!container) return
+        const rect = container.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const percentage = (x / rect.width) * 100
 
-      const rect = container.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const percentage = (x / rect.width) * 100
+        if (percentage > 20 && percentage < 80) {
+          setSliderPosition(percentage)
+        }
+      }
 
-      if (percentage > 20 && percentage < 80) {
-        setSliderPosition(percentage)
+      if (isDraggingSidebar) {
+        const sidebar = document.querySelector('.file-explorer') as HTMLElement
+        if (!sidebar) return
+
+        const rect = sidebar.getBoundingClientRect()
+        const newWidth = e.clientX - rect.left
+        if (newWidth >= 150 && newWidth <= 600) {
+          setSidebarWidth(newWidth)
+        }
       }
     }
 
     const handleMouseUp = () => {
-      setIsDragging(false)
+      setIsDraggingDivider(false)
+      setIsDraggingSidebar(false)
     }
 
-    if (isDragging) {
+    if (isDraggingDivider || isDraggingSidebar) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
     }
@@ -77,13 +110,12 @@ export default function EditorContainer() {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging, setSliderPosition])
+  }, [isDraggingDivider, isDraggingSidebar, setSliderPosition, setSidebarWidth])
 
   React.useEffect(() => {
     const renderMermaid = async () => {
       if (mermaidCode.length === 0) return
 
-      // Wait for React to finish rendering
       await new Promise(resolve => setTimeout(resolve, 100))
 
       const previewContainer = document.querySelector('.markdown-preview')
@@ -102,7 +134,7 @@ export default function EditorContainer() {
             bindFunctions?.(div)
           } catch (error) {
             console.error('Mermaid rendering error:', error)
-            div.innerHTML = `<pre style="color: red; padding: 10px; border: 1px solid red;">Mermaid error: ${error instanceof Error ? error.message : 'Unknown error'}\n\nCode:\n${code}</pre>`
+            div.innerHTML = `<pre style="color: red; padding: 10px; border: 1.5px solid red;">Mermaid error: ${error instanceof Error ? error.message : 'Unknown error'}\n\nCode:\n${code}</pre>`
           }
         }
       }
@@ -112,57 +144,75 @@ export default function EditorContainer() {
   }, [mermaidCode])
 
   return (
-    <div style={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
-      <div style={{ marginBottom: '10px', padding: '0 20px' }}>
-        <button onClick={togglePreview} style={{ marginRight: '10px' }}>
-          {showPreview ? 'Hide Preview' : 'Show Preview'}
-        </button>
-        <button onClick={toggleEditor}>
-          {showEditor ? 'Hide Editor' : 'Show Editor'}
-        </button>
-      </div>
-      <div className="editor-layout" style={{ display: 'flex', flex: 1, height: '100%' }}>
-        <div style={{ width: !showPreview ? '0%' : (!showEditor ? '100%' : `${sliderPosition}%`), overflow: 'hidden' }}>
-          {showPreview && (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', height: '100%' }}>
+        {showSidebar && (
+          <>
+            <div className="file-explorer" style={{ width: sidebarWidth, borderRight: '1px solid #e0e0e0' }}>
+              <FileExplorer onFileSelect={handleFileSelect} />
+            </div>
             <div
               style={{
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
-                padding: '20px',
-                height: '100%',
-                overflow: 'auto',
+                width: '8px',
+                cursor: 'col-resize',
+                backgroundColor: '#e0e0e0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-              className="markdown-preview"
-              dangerouslySetInnerHTML={{ __html: previewHtml }}
-            />
-          )}
-        </div>
-        {showPreview && showEditor && (
-          <div
-            style={{
-              width: '8px',
-              cursor: 'col-resize',
-              backgroundColor: '#e0e0e0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: isDragging ? 'none' : 'background-color 0.2s',
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#bdbdbd'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
-          >
-            <div style={{ width: '2px', height: '20px', backgroundColor: '#9e9e9e' }} />
-          </div>
+              onMouseDown={handleSidebarMouseDown}
+            >
+              <div style={{ width: '2px', height: '20px', backgroundColor: '#9e9e9e' }} />
+            </div>
+          </>
         )}
-        <div style={{ width: !showPreview ? '100%' : (!showEditor ? '0%' : `${100 - sliderPosition}%`), overflow: 'hidden' }}>
-          {showEditor && (
-            <CodeMirrorEditor
-              content={content}
-              onChange={handleChange}
-              onSelectionChange={handleSelectionChange}
-            />
-          )}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <MarkdownToolbar onInsertMarkdown={(text) => editorRef.current?.insertText(text)} />
+          <div className="editor-layout" style={{ display: 'flex', flex: 1, height: '100%', overflow: 'hidden' }}>
+            <div style={{ width: !showPreview ? '0%' : (!showEditor ? '100%' : `${sliderPosition}%`), overflow: 'hidden' }}>
+              {showPreview && (
+                <div
+                  style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '4px',
+                    padding: '20px',
+                    height: '100%',
+                    overflow: 'auto',
+                  }}
+                  className="markdown-preview"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+              )}
+            </div>
+            {showPreview && showEditor && (
+              <div
+                style={{
+                  width: '8px',
+                  cursor: 'col-resize',
+                  backgroundColor: '#e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: isDraggingDivider ? 'none' : 'background-color 0.2s',
+                }}
+                onMouseDown={handleDividerMouseDown}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#bdbdbd'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
+              >
+                <div style={{ width: '2px', height: '20px', backgroundColor: '#9e9e9e' }} />
+              </div>
+            )}
+            <div style={{ width: !showPreview ? '100%' : (!showEditor ? '0%' : `${100 - sliderPosition}%`), overflow: 'hidden' }}>
+              {showEditor && (
+                <CodeMirrorEditor
+                  ref={editorRef}
+                  content={content}
+                  onChange={handleChange}
+                  onSelectionChange={handleSelectionChange}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
