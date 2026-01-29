@@ -1,2 +1,6 @@
 node_modules
 .worktrees
+dist/
+dist-electron/
+build/
+release/
