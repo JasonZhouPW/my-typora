@@ -19,7 +19,6 @@ export default function EditorContainer() {
   const [isDraggingDivider, setIsDraggingDivider] = React.useState(false)
   const [isDraggingSidebar, setIsDraggingSidebar] = React.useState(false)
   const editorRef = useRef<CodeMirrorEditorRef>(null)
-  const mermaidCodeRef = useRef<string[]>([])
 
   const handleChange = (newContent: string) => {
     setContent(newContent)
@@ -115,10 +114,6 @@ export default function EditorContainer() {
 
   React.useEffect(() => {
     const renderMermaid = async () => {
-      if (mermaidCode.length === 0) return
-
-      await new Promise(resolve => setTimeout(resolve, 100))
-
       const previewContainer = document.querySelector('.markdown-preview')
       if (!previewContainer) return
 
@@ -126,6 +121,8 @@ export default function EditorContainer() {
 
       for (let i = 0; i < mermaidDivs.length; i++) {
         const div = mermaidDivs[i] as HTMLElement
+        if (div.innerHTML.trim()) continue
+
         if (i < mermaidCode.length && mermaidCode[i]) {
           const code = mermaidCode[i]
 
@@ -142,11 +139,11 @@ export default function EditorContainer() {
     }
 
     renderMermaid()
-    mermaidCodeRef.current = mermaidCode
-  }, [mermaidCode, showPreview])
+  }, [previewHtml, showPreview])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <MarkdownToolbar onInsertMarkdown={(text) => editorRef.current?.insertText(text)} />
       <div style={{ display: 'flex', height: '100%' }}>
         {showSidebar && (
           <>
@@ -168,9 +165,7 @@ export default function EditorContainer() {
             </div>
           </>
         )}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <MarkdownToolbar onInsertMarkdown={(text) => editorRef.current?.insertText(text)} />
-          <div className="editor-layout" style={{ display: 'flex', flex: 1, height: '100%', overflow: 'hidden' }}>
+        <div className="editor-layout" style={{ display: 'flex', flex: 1, height: '100%', overflow: 'hidden' }}>
             <div style={{ width: !showPreview ? '0%' : (!showEditor ? '100%' : `${sliderPosition}%`), overflow: 'hidden' }}>
               {showPreview && (
                 <div
@@ -217,6 +212,5 @@ export default function EditorContainer() {
           </div>
         </div>
       </div>
-    </div>
   )
 }

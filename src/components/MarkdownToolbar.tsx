@@ -61,7 +61,7 @@ const baseTooltipStyle = {
 }
 
 export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarProps) {
-  const { showPreview, togglePreview, showEditor, toggleEditor } = useUIStore()
+  const { showSidebar, toggleSidebar, showPreview, togglePreview, showEditor, toggleEditor } = useUIStore()
   const [showTableDialog, setShowTableDialog] = useState(false)
   const [showLinkDialog, setShowLinkDialog] = useState(false)
   const [linkText, setLinkText] = useState('')
@@ -115,16 +115,6 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
     setTooltip(null)
   }, [])
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (tooltip) {
-      setTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)
-    }
-  }, [tooltip])
-
-  const handleMouseEnterWrapper = useCallback((e: React.MouseEvent, title: string) => {
-    handleMouseEnter(e, title)
-  }, [handleMouseEnter])
-
   return (
     <>
       <div
@@ -134,13 +124,20 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
           alignItems: 'center',
           gap: '8px',
           padding: '8px 12px',
-          borderBottom: '1px solid #e0e0e0',
           backgroundColor: '#fafafa',
           flexWrap: 'wrap',
         }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
       >
+        <button
+          onClick={toggleSidebar}
+          title="Toggle File Explorer"
+          aria-label="Toggle File Explorer"
+          style={baseButtonStyle}
+          onMouseEnter={(e) => handleMouseEnter(e, 'Toggle File Explorer')}
+          onMouseLeave={handleMouseLeave}
+        >
+          {showSidebar ? 'Hide Files' : 'Show Files'}
+        </button>
         {BUTTONS.map((btn, i) => (
           <button
             key={i}
@@ -151,7 +148,8 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
               ...baseButtonStyle,
               fontWeight: btn.label.startsWith('H') ? 600 : 400,
             }}
-            onMouseEnter={(e) => handleMouseEnterWrapper(e, btn.title)}
+            onMouseEnter={(e) => handleMouseEnter(e, btn.title)}
+            onMouseLeave={handleMouseLeave}
           >
             {btn.label}
           </button>
@@ -161,7 +159,8 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
           title="Insert table"
           aria-label="Insert table"
           style={baseButtonStyle}
-          onMouseEnter={(e) => handleMouseEnterWrapper(e, 'Insert table')}
+          onMouseEnter={(e) => handleMouseEnter(e, 'Insert table')}
+          onMouseLeave={handleMouseLeave}
         >
           Table
         </button>

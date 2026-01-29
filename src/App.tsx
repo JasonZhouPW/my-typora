@@ -1,11 +1,10 @@
 import React from 'react'
 import EditorContainer from './components/EditorContainer'
-import { useDocumentStore, useUIStore } from './store'
+import { useDocumentStore } from './store'
 import { fileOperations } from './utils/fileOperations'
 
 function App() {
   const { filePath, setFilePath, setModified, setInitialContent } = useDocumentStore()
-  const { toggleSidebar } = useUIStore()
 
   React.useEffect(() => {
     setInitialContent('# Mermaid Test\n\n```mermaid\ngraph LR\n    A[Start] --> B[Process]\n    B --> C[End]\n```\n\nThis should render as a diagram above.')
@@ -62,29 +61,11 @@ function App() {
       window.electronAPI.removeListener('file:save-request', saveListener)
       window.electronAPI.removeListener('file:save-as-request', saveAsListener)
     }
-  }, [filePath, setFilePath, setModified, setInitialContent])
+  }, [setInitialContent, filePath, setFilePath, setModified])
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header
-        style={{
-          padding: '10px 20px',
-          borderBottom: '1px solid #e0e0e0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: '18px' }}>Typora Editor</h1>
-        <div>
-          <button onClick={toggleSidebar} style={{ marginRight: '10px' }}>
-            Sidebar
-          </button>
-        </div>
-      </header>
-      <div style={{ flex: 1, padding: '20px' }}>
-        <EditorContainer />
-      </div>
+    <div style={{ height: '100vh' }}>
+      <EditorContainer />
     </div>
   )
 }
