@@ -19,6 +19,7 @@ export default function EditorContainer() {
   const [isDraggingDivider, setIsDraggingDivider] = React.useState(false)
   const [isDraggingSidebar, setIsDraggingSidebar] = React.useState(false)
   const editorRef = useRef<CodeMirrorEditorRef>(null)
+  const mermaidCodeRef = useRef<string[]>([])
 
   const handleChange = (newContent: string) => {
     setContent(newContent)
@@ -58,7 +59,6 @@ export default function EditorContainer() {
 
   const previewHtml = markdownTransformer.transform(content)
   const mermaidCode = markdownTransformer.extractMermaidCode(content)
-  const mermaidCodeRef = useRef<string[]>([])
 
   const handleDividerMouseDown = (e: React.MouseEvent) => {
     setIsDraggingDivider(true)
@@ -142,6 +142,7 @@ export default function EditorContainer() {
     }
 
     renderMermaid()
+    mermaidCodeRef.current = mermaidCode
   }, [mermaidCode, showPreview])
 
   return (

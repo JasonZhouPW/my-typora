@@ -49,14 +49,13 @@ const primaryButtonStyle = {
   cursor: 'pointer',
 }
 
-const tooltipStyle = {
-  position: 'fixed',
+const baseTooltipStyle = {
   backgroundColor: '#333',
   color: 'white',
   padding: '8px 12px',
   borderRadius: '4px',
   fontSize: '13px',
-  whiteSpace: 'nowrap',
+  whiteSpace: 'nowrap' as const,
   zIndex: 2000,
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
 }
@@ -185,7 +184,8 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
       {tooltip && (
         <div
           style={{
-            ...tooltipStyle,
+            ...baseTooltipStyle,
+            position: 'fixed',
             left: `${tooltip.x}px`,
             top: `${tooltip.y}px`,
             transform: 'translate(-50%, 0)',
