@@ -6,7 +6,13 @@ interface MarkdownToolbarProps {
   onInsertMarkdown: (text: { before: string; after: string } | string) => void
 }
 
-const BUTTONS = [
+interface ToolbarButton {
+  label: string
+  action: () => string | { before: string; after: string }
+  title: string
+}
+
+const BUTTONS: ToolbarButton[] = [
   { label: 'Bold', action: () => ({ before: '**', after: '**' }), title: 'Bold (Ctrl+B)' },
   { label: 'Italic', action: () => ({ before: '*', after: '*' }), title: 'Italic (Ctrl+I)' },
   { label: 'Strikethrough', action: () => ({ before: '~~', after: '~~' }), title: 'Strikethrough' },
@@ -43,12 +49,26 @@ const primaryButtonStyle = {
   cursor: 'pointer',
 }
 
+const tooltipStyle = {
+  position: 'fixed',
+  backgroundColor: '#333',
+  color: 'white',
+  padding: '8px 12px',
+  borderRadius: '4px',
+  fontSize: '13px',
+  whiteSpace: 'nowrap',
+  zIndex: 2000,
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+}
+
 export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarProps) {
   const { showPreview, togglePreview, showEditor, toggleEditor } = useUIStore()
   const [showTableDialog, setShowTableDialog] = useState(false)
   const [showLinkDialog, setShowLinkDialog] = useState(false)
   const [linkText, setLinkText] = useState('')
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
   const linkInputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (showLinkDialog && linkInputRef.current) {
@@ -82,17 +102,46 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
     return () => onInsertMarkdown(action())
   }, [onInsertMarkdown])
 
+  const handleMouseEnter = useCallback((e: React.MouseEvent, title: string) => {
+    const target = e.currentTarget as HTMLElement
+    const rect = target.getBoundingClientRect()
+    setTooltip({
+      text: title,
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 5,
+    })
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip(null)
+  }, [])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (tooltip) {
+      setTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)
+    }
+  }, [tooltip])
+
+  const handleMouseEnterWrapper = useCallback((e: React.MouseEvent, title: string) => {
+    handleMouseEnter(e, title)
+  }, [handleMouseEnter])
+
   return (
     <>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '8px 12px',
-        borderBottom: '1px solid #e0e0e0',
-        backgroundColor: '#fafafa',
-        flexWrap: 'wrap',
-      }}>
+      <div
+        ref={containerRef}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 12px',
+          borderBottom: '1px solid #e0e0e0',
+          backgroundColor: '#fafafa',
+          flexWrap: 'wrap',
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         {BUTTONS.map((btn, i) => (
           <button
             key={i}
@@ -103,15 +152,17 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
               ...baseButtonStyle,
               fontWeight: btn.label.startsWith('H') ? 600 : 400,
             }}
+            onMouseEnter={(e) => handleMouseEnterWrapper(e, btn.title)}
           >
             {btn.label}
           </button>
         ))}
         <button
           onClick={() => setShowTableDialog(true)}
-          title="Table"
+          title="Insert table"
           aria-label="Insert table"
           style={baseButtonStyle}
+          onMouseEnter={(e) => handleMouseEnterWrapper(e, 'Insert table')}
         >
           Table
         </button>
@@ -131,6 +182,18 @@ export default function MarkdownToolbar({ onInsertMarkdown }: MarkdownToolbarPro
           {showEditor ? 'Hide Editor' : 'Show Editor'}
         </button>
       </div>
+      {tooltip && (
+        <div
+          style={{
+            ...tooltipStyle,
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+            transform: 'translate(-50%, 0)',
+          }}
+        >
+          {tooltip.text}
+        </div>
+      )}
       <TableDialog
         isOpen={showTableDialog}
         onClose={() => setShowTableDialog(false)}

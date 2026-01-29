@@ -38,7 +38,7 @@ const CodeMirrorEditor = forwardRef<CodeMirrorEditorRef, CodeMirrorEditorProps>(
           changes: { from, to, insert: text },
           selection: { anchor: from + text.length },
         })
-      } else {
+      } else if (text && 'before' in text && 'after' in text) {
         const selectedText = view.state.doc.sliceString(from, to)
         view.dispatch({
           changes: { from, to, insert: text.before + selectedText + text.after },

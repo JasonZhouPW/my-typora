@@ -58,6 +58,7 @@ export default function EditorContainer() {
 
   const previewHtml = markdownTransformer.transform(content)
   const mermaidCode = markdownTransformer.extractMermaidCode(content)
+  const mermaidCodeRef = useRef<string[]>([])
 
   const handleDividerMouseDown = (e: React.MouseEvent) => {
     setIsDraggingDivider(true)
@@ -141,7 +142,7 @@ export default function EditorContainer() {
     }
 
     renderMermaid()
-  }, [mermaidCode])
+  }, [mermaidCode, showPreview])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
