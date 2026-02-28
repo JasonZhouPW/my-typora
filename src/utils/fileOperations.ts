@@ -10,4 +10,12 @@ export const fileOperations = {
   async saveFile(filePath: string, content: string): Promise<boolean> {
     return await window.electronAPI.file.save(filePath, content)
   },
+
+  async readDir(dirPath?: string): Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean }>> {
+    return await window.electronAPI.file.readDir(dirPath)
+  },
+
+  async readFile(filePath: string): Promise<{ path: string; content: string } | null> {
+    return await window.electronAPI.file.read(filePath)
+  },
 }

@@ -1,7 +1,45 @@
 import { ipcMain, dialog } from 'electron'
 import fs from 'fs/promises'
+import path from 'path'
+import os from 'os'
 
 export function registerFileHandlers() {
+  // Read directory contents
+  ipcMain.handle('file:read-dir', async (_event, dirPath?: string) => {
+    const targetPath = dirPath || os.homedir()
+    try {
+      const entries = await fs.readdir(targetPath, { withFileTypes: true })
+      const items = entries
+        .filter(entry => !entry.name.startsWith('.')) // Filter hidden files
+        .map(entry => ({
+          name: entry.name,
+          path: path.join(targetPath, entry.name),
+          type: entry.isDirectory() ? 'folder' : 'file',
+          isDirectory: entry.isDirectory(),
+        }))
+        .sort((a, b) => {
+          // Folders first, then files, both alphabetically
+          if (a.type === b.type) return a.name.localeCompare(b.name)
+          return a.type === 'folder' ? -1 : 1
+        })
+      return items
+    } catch (error) {
+      console.error('Failed to read directory:', error)
+      return []
+    }
+  })
+
+  // Read specific file content
+  ipcMain.handle('file:read', async (_event, filePath: string) => {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8')
+      return { path: filePath, content }
+    } catch (error) {
+      console.error('Failed to read file:', error)
+      return null
+    }
+  })
+
   ipcMain.handle('file:open', async () => {
     const result = await dialog.showOpenDialog({
       filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown', 'txt'] }],
