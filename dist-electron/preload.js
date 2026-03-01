@@ -1,1 +1,17 @@
-"use strict";const r=require("electron");r.contextBridge.exposeInMainWorld("electronAPI",{file:{open:()=>r.ipcRenderer.invoke("file:open"),saveAs:e=>r.ipcRenderer.invoke("file:save-as",e),save:(e,i)=>r.ipcRenderer.invoke("file:save",e,i),readDir:e=>r.ipcRenderer.invoke("file:read-dir",e),read:e=>r.ipcRenderer.invoke("file:read",e)},on:(e,i)=>{r.ipcRenderer.on(e,i)},removeListener:(e,i)=>{r.ipcRenderer.removeListener(e,i)}});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("electronAPI", {
+  file: {
+    open: () => electron.ipcRenderer.invoke("file:open"),
+    saveAs: (content) => electron.ipcRenderer.invoke("file:save-as", content),
+    save: (filePath, content) => electron.ipcRenderer.invoke("file:save", filePath, content),
+    readDir: (dirPath) => electron.ipcRenderer.invoke("file:read-dir", dirPath),
+    read: (filePath) => electron.ipcRenderer.invoke("file:read", filePath)
+  },
+  on: (channel, listener) => {
+    electron.ipcRenderer.on(channel, listener);
+  },
+  removeListener: (channel, listener) => {
+    electron.ipcRenderer.removeListener(channel, listener);
+  }
+});
