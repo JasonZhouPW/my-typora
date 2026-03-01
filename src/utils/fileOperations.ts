@@ -18,4 +18,12 @@ export const fileOperations = {
   async readFile(filePath: string): Promise<{ path: string; content: string } | null> {
     return await window.electronAPI.file.read(filePath)
   },
+
+  async createFile(dirPath: string, fileName: string): Promise<{ path: string; name: string } | null> {
+    return await window.electronAPI.file.create(dirPath, fileName)
+  },
+
+  async deleteFile(itemPath: string, isDirectory: boolean): Promise<boolean> {
+    return await window.electronAPI.file.delete(itemPath, isDirectory)
+  },
 }

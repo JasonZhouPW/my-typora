@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useDocumentStore, useUIStore } from '../store'
 import { fileOperations } from '../utils/fileOperations'
+import ContextMenu from './ContextMenu'
 import '../styles/file-explorer.css'
 
 interface FileItem {
@@ -10,12 +11,27 @@ interface FileItem {
   isDirectory: boolean
 }
 
+interface ContextMenuState {
+  visible: boolean
+  x: number
+  y: number
+  item: FileItem | null
+  isOnItem: boolean
+}
+
 export default function FileExplorer() {
   const { setFilePath, setInitialContent, setModified } = useDocumentStore()
   const { toggleSidebar } = useUIStore()
   const [currentPath, setCurrentPath] = useState<string>('')
   const [items, setItems] = useState<FileItem[]>([])
   const [history, setHistory] = useState<string[]>([])
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    item: null,
+    isOnItem: false,
+  })
 
   // Load home directory on mount
   useEffect(() => {
@@ -68,6 +84,86 @@ export default function FileExplorer() {
 
   const isHome = currentPath === '' || currentPath === 'Home'
 
+  // Handle context menu (right-click)
+  const handleContextMenu = (e: React.MouseEvent, item: FileItem | null) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      item,
+      isOnItem: !!item,
+    })
+  }
+
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }
+
+  // Create new file
+  const handleCreateFile = async () => {
+    const dirPath = isHome ? '' : currentPath
+    const fileName = prompt('请输入文件名:', 'untitled.md')
+    if (!fileName) return
+
+    try {
+      const result = await fileOperations.createFile(dirPath, fileName)
+      if (result) {
+        // Refresh the file list
+        loadDirectory(isHome ? '' : currentPath)
+      }
+    } catch (error) {
+      console.error('Failed to create file:', error)
+      alert('创建文件失败')
+    }
+  }
+
+  // Delete file or folder
+  const handleDelete = async () => {
+    if (!contextMenu.item) return
+
+    const confirmMsg = contextMenu.item.isDirectory
+      ? `确定要删除文件夹 "${contextMenu.item.name}" 吗？`
+      : `确定要删除文件 "${contextMenu.item.name}" 吗？`
+
+    if (!confirm(confirmMsg)) return
+
+    try {
+      const success = await fileOperations.deleteFile(contextMenu.item.path, contextMenu.item.isDirectory)
+      if (success) {
+        // Refresh the file list
+        loadDirectory(isHome ? '' : currentPath)
+      } else {
+        alert('删除失败')
+      }
+    } catch (error) {
+      console.error('Failed to delete:', error)
+      alert('删除失败')
+    }
+  }
+
+  // Build context menu items
+  const contextMenuItems = [
+    {
+      label: '新建文件',
+      onClick: handleCreateFile,
+      icon: '📄',
+    },
+    ...(contextMenu.isOnItem && contextMenu.item
+      ? [
+          {
+            label: '删除',
+            onClick: handleDelete,
+            icon: '🗑️',
+            danger: true,
+          },
+        ]
+      : []),
+  ]
+
   return (
     <div className="file-explorer">
       {/* Header */}
@@ -96,7 +192,10 @@ export default function FileExplorer() {
       )}
 
       {/* File List */}
-      <div className="file-explorer-list">
+      <div
+        className="file-explorer-list"
+        onContextMenu={(e) => handleContextMenu(e, null)}
+      >
         {items.length === 0 ? (
           <div className="file-explorer-empty">
             {isHome ? '加载中...' : '空文件夹'}
@@ -109,6 +208,7 @@ export default function FileExplorer() {
                 key={item.path}
                 className="file-item"
                 onClick={() => handleFolderClick(item)}
+                onContextMenu={(e) => handleContextMenu(e, item)}
                 title={item.path}
               >
                 <span className="file-item-icon file-item-icon-folder">📁</span>
@@ -122,6 +222,7 @@ export default function FileExplorer() {
                 key={item.path}
                 className={`file-item ${!isMarkdownFile(item.name) ? 'file-item-disabled' : ''}`}
                 onClick={() => isMarkdownFile(item.name) && handleFileClick(item)}
+                onContextMenu={(e) => handleContextMenu(e, item)}
                 title={isMarkdownFile(item.name) ? item.path : '仅支持打开 Markdown 文件'}
               >
                 <span className="file-item-icon file-item-icon-file">📄</span>
@@ -138,6 +239,16 @@ export default function FileExplorer() {
       <div className="file-explorer-footer">
         {currentPath || 'Home'}
       </div>
+
+      {/* Context Menu */}
+      {contextMenu.visible && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={closeContextMenu}
+        />
+      )}
     </div>
   )
 }

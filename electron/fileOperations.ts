@@ -81,4 +81,31 @@ export function registerFileHandlers() {
     addFileToRecent(filePath)
     return true
   })
+
+  // Create new file
+  ipcMain.handle('file:create', async (_event, dirPath: string, fileName: string) => {
+    try {
+      const filePath = path.join(dirPath, fileName)
+      await fs.writeFile(filePath, '', 'utf-8')
+      return { path: filePath, name: fileName }
+    } catch (error) {
+      console.error('Failed to create file:', error)
+      return null
+    }
+  })
+
+  // Delete file or folder
+  ipcMain.handle('file:delete', async (_event, itemPath: string, isDirectory: boolean) => {
+    try {
+      if (isDirectory) {
+        await fs.rmdir(itemPath)
+      } else {
+        await fs.unlink(itemPath)
+      }
+      return true
+    } catch (error) {
+      console.error('Failed to delete:', error)
+      return false
+    }
+  })
 }
