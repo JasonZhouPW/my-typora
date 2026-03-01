@@ -132,16 +132,29 @@ export default function FileExplorer() {
     if (!confirm(confirmMsg)) return
 
     try {
-      const success = await fileOperations.deleteFile(contextMenu.item.path, contextMenu.item.isDirectory)
-      if (success) {
+      const result = await fileOperations.deleteFile(contextMenu.item.path, contextMenu.item.isDirectory)
+      if (result.success) {
         // Refresh the file list
         loadDirectory(isHome ? '' : currentPath)
       } else {
-        alert('删除失败')
+        // Show specific error message
+        let errorMsg = '删除失败'
+        if (result.error) {
+          if (result.error.includes('ENOENT')) {
+            errorMsg = '文件不存在'
+          } else if (result.error.includes('EACCES')) {
+            errorMsg = '权限不足，无法删除'
+          } else if (result.error.includes('EPERM')) {
+            errorMsg = '文件正在使用中，无法删除'
+          } else {
+            errorMsg = `删除失败：${result.error}`
+          }
+        }
+        alert(errorMsg)
       }
     } catch (error) {
       console.error('Failed to delete:', error)
-      alert('删除失败')
+      alert('删除失败：' + (error instanceof Error ? error.message : '未知错误'))
     }
   }
 

@@ -98,14 +98,16 @@ export function registerFileHandlers() {
   ipcMain.handle('file:delete', async (_event, itemPath: string, isDirectory: boolean) => {
     try {
       if (isDirectory) {
-        await fs.rmdir(itemPath)
+        // Use rm with recursive option to delete non-empty folders
+        await fs.rm(itemPath, { recursive: true, force: true })
       } else {
         await fs.unlink(itemPath)
       }
-      return true
+      return { success: true }
     } catch (error) {
       console.error('Failed to delete:', error)
-      return false
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
     }
   })
 }

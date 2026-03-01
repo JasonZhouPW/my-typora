@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     readDir: (dirPath?: string) => ipcRenderer.invoke('file:read-dir', dirPath),
     read: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
     create: (dirPath: string, fileName: string) => ipcRenderer.invoke('file:create', dirPath, fileName),
-    delete: (itemPath: string, isDirectory: boolean) => ipcRenderer.invoke('file:delete', itemPath, isDirectory),
+    delete: (itemPath: string, isDirectory: boolean) => ipcRenderer.invoke('file:delete', itemPath, isDirectory).then(res => res as { success: boolean; error?: string }),
   },
   on: (channel: string, listener: (...args: any[]) => void) => {
     ipcRenderer.on(channel, listener)
@@ -28,7 +28,7 @@ declare global {
         readDir: (dirPath?: string) => Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean }>>
         read: (filePath: string) => Promise<{ path: string; content: string } | null>
         create: (dirPath: string, fileName: string) => Promise<{ path: string; name: string } | null>
-        delete: (itemPath: string, isDirectory: boolean) => Promise<boolean>
+        delete: (itemPath: string, isDirectory: boolean) => Promise<{ success: boolean; error?: string }>
       }
       on: (channel: string, listener: (...args: any[]) => void) => void
       removeListener: (channel: string, listener: (...args: any[]) => void) => void
