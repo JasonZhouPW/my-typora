@@ -2,6 +2,7 @@ import { ipcMain, dialog } from 'electron'
 import fs from 'fs/promises'
 import path from 'path'
 import os from 'os'
+import { addFileToRecent } from './main'
 
 export function registerFileHandlers() {
   // Read directory contents
@@ -33,6 +34,8 @@ export function registerFileHandlers() {
   ipcMain.handle('file:read', async (_event, filePath: string) => {
     try {
       const content = await fs.readFile(filePath, 'utf-8')
+      // Add to recent files
+      addFileToRecent(filePath)
       return { path: filePath, content }
     } catch (error) {
       console.error('Failed to read file:', error)
@@ -52,6 +55,8 @@ export function registerFileHandlers() {
 
     const filePath = result.filePaths[0]
     const content = await fs.readFile(filePath, 'utf-8')
+    // Add to recent files
+    addFileToRecent(filePath)
     return { path: filePath, content }
   })
 
@@ -65,11 +70,15 @@ export function registerFileHandlers() {
     }
 
     await fs.writeFile(result.filePath, content, 'utf-8')
+    // Add to recent files
+    addFileToRecent(result.filePath)
     return result.filePath
   })
 
   ipcMain.handle('file:save', async (_event, filePath: string, content: string) => {
     await fs.writeFile(filePath, content, 'utf-8')
+    // Add to recent files
+    addFileToRecent(filePath)
     return true
   })
 }

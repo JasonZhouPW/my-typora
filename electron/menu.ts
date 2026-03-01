@@ -1,6 +1,19 @@
 import { Menu, app, BrowserWindow } from 'electron'
+import path from 'path'
+
+let recentFiles: string[] = []
 
 export function createMenu() {
+  updateMenu()
+}
+
+// Export a function to update recent files menu, called from main.ts
+export function updateRecentFilesMenu(files: string[]) {
+  recentFiles = files
+  updateMenu()
+}
+
+function updateMenu() {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
       label: 'File',
@@ -24,6 +37,21 @@ export function createMenu() {
               focusedWindow.webContents.send('file:open-request')
             }
           },
+        },
+        {
+          label: 'Open Recent...',
+          enabled: recentFiles.length > 0,
+          submenu: recentFiles.length > 0
+            ? recentFiles.map(file => ({
+                label: path.basename(file),
+                click: () => {
+                  const focusedWindow = BrowserWindow.getFocusedWindow()
+                  if (focusedWindow) {
+                    focusedWindow.webContents.send('file:open-file', file)
+                  }
+                },
+              }))
+            : [{ label: 'No Recent Files', enabled: false }],
         },
         { type: 'separator' },
         {

@@ -1,0 +1,160 @@
+/* ===================================
+   EditorContainer Component Styles
+   =================================== */
+
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+/* Toolbar */
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-4);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  gap: var(--spacing-2);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--text-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.toolbar-button:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.toolbar-button.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.toolbar-button-icon {
+  font-size: 16px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-light);
+  margin: 0 var(--spacing-2);
+}
+
+/* Editor Layout */
+.editor-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Preview Panel */
+.preview-panel {
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+.preview-panel.hidden {
+  display: none;
+}
+
+/* Editor Panel */
+.editor-panel {
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.editor-panel.hidden {
+  display: none;
+}
+
+/* Resize Handle */
+.resize-handle {
+  width: 8px;
+  background: transparent;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.resize-handle:hover {
+  background: var(--color-primary-light);
+}
+
+.resize-handle-line {
+  width: 2px;
+  height: 24px;
+  background: var(--border-medium);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.resize-handle:hover .resize-handle-line {
+  background: var(--color-primary);
+}
+
+/* Single Pane Mode */
+.editor-layout.single-preview .preview-panel {
+  flex: 1;
+}
+
+.editor-layout.single-preview .editor-panel {
+  display: none;
+}
+
+.editor-layout.single-editor .editor-panel {
+  flex: 1;
+}
+
+.editor-layout.single-editor .preview-panel {
+  display: none;
+}
+
+/* Status Bar */
+.editor-status-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-1) var(--spacing-4);
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.status-bar-left,
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
