@@ -1,2 +1,8 @@
 node_modules
 .worktrees
+build/
+dist/
+dist-electron/
+release/
+electron-builder.json
+*.DS_Store
