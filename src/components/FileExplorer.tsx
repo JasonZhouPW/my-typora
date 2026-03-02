@@ -66,7 +66,11 @@ export default function FileExplorer() {
       let comparison = 0
       switch (sortBy) {
         case 'name':
-          comparison = a.name.localeCompare(b.name, 'zh-CN')
+          // Use Chinese locale with numeric and sensitivity options for proper sorting
+          comparison = a.name.localeCompare(b.name, 'zh-Hans-CN', {
+            numeric: true,
+            sensitivity: 'base',
+          })
           break
         case 'mtime':
           comparison = (a.mtime || 0) - (b.mtime || 0)
