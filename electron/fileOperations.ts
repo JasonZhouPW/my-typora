@@ -89,6 +89,20 @@ export function registerFileHandlers() {
     }
   })
 
+  // Rename file or folder
+  ipcMain.handle('file:rename', async (_event, oldPath: string, newName: string) => {
+    try {
+      const dirPath = path.dirname(oldPath)
+      const newPath = path.join(dirPath, newName)
+      await fs.rename(oldPath, newPath)
+      return { success: true, newPath }
+    } catch (error) {
+      console.error('Failed to rename:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return { success: false, error: errorMessage }
+    }
+  })
+
   // Delete file or folder
   ipcMain.handle('file:delete', async (_event, itemPath: string, isDirectory: boolean) => {
     try {

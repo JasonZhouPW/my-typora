@@ -23,6 +23,10 @@ export const fileOperations = {
     return await window.electronAPI.file.create(dirPath, fileName)
   },
 
+  async renameFile(oldPath: string, newName: string): Promise<{ success: boolean; newPath?: string; error?: string }> {
+    return await window.electronAPI.file.rename(oldPath, newName)
+  },
+
   async deleteFile(itemPath: string, isDirectory: boolean): Promise<{ success: boolean; error?: string }> {
     return await window.electronAPI.file.delete(itemPath, isDirectory)
   },

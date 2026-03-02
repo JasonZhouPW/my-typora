@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     readDir: (dirPath?: string) => ipcRenderer.invoke('file:read-dir', dirPath),
     read: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
     create: (dirPath: string, fileName: string) => ipcRenderer.invoke('file:create', dirPath, fileName),
+    rename: (oldPath: string, newName: string) => ipcRenderer.invoke('file:rename', oldPath, newName),
     delete: (itemPath: string, isDirectory: boolean) => ipcRenderer.invoke('file:delete', itemPath, isDirectory).then(res => res as { success: boolean; error?: string }),
     getStats: (dirPath?: string) => ipcRenderer.invoke('file:get-stats', dirPath),
   },
@@ -29,6 +30,7 @@ declare global {
         readDir: (dirPath?: string) => Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean }>>
         read: (filePath: string) => Promise<{ path: string; content: string } | null>
         create: (dirPath: string, fileName: string) => Promise<{ path: string; name: string } | null>
+        rename: (oldPath: string, newName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>
         delete: (itemPath: string, isDirectory: boolean) => Promise<{ success: boolean; error?: string }>
         getStats: (dirPath?: string) => Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean; mtime: number; birthtime: number }>>
       }

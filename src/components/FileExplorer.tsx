@@ -200,6 +200,45 @@ export default function FileExplorer() {
     }
   }
 
+  // Rename file or folder
+  const handleRename = async () => {
+    if (!contextMenu.item) return
+
+    const newName = prompt(
+      '请输入新文件名:',
+      contextMenu.item.name
+    )
+    if (!newName || newName === contextMenu.item.name) return
+
+    try {
+      const result = await fileOperations.renameFile(contextMenu.item.path, newName)
+      if (result.success) {
+        // Refresh the file list
+        loadDirectory(isHome ? '' : currentPath)
+      } else {
+        // Show specific error message
+        let errorMsg = '重命名失败'
+        if (result.error) {
+          if (result.error.includes('ENOENT')) {
+            errorMsg = '文件不存在'
+          } else if (result.error.includes('EEXIST')) {
+            errorMsg = '文件名已存在'
+          } else if (result.error.includes('EACCES')) {
+            errorMsg = '权限不足，无法重命名'
+          } else if (result.error.includes('EPERM')) {
+            errorMsg = '文件正在使用中，无法重命名'
+          } else {
+            errorMsg = `重命名失败：${result.error}`
+          }
+        }
+        alert(errorMsg)
+      }
+    } catch (error) {
+      console.error('Failed to rename:', error)
+      alert('重命名失败：' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
   // Build context menu items
   const contextMenuItems = [
     {
@@ -233,6 +272,11 @@ export default function FileExplorer() {
     { label: '', onClick: () => {}, disabled: true, isDivider: true } as any,
     ...(contextMenu.isOnItem && contextMenu.item
       ? [
+          {
+            label: '重命名',
+            onClick: handleRename,
+            icon: '✏️',
+          },
           {
             label: '删除',
             onClick: handleDelete,
