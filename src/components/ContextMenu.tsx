@@ -14,6 +14,7 @@ interface ContextMenuItem {
   icon?: string
   disabled?: boolean
   danger?: boolean
+  isDivider?: boolean
 }
 
 export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
@@ -60,20 +61,24 @@ export default function ContextMenu({ x, y, items, onClose }: ContextMenuProps) 
       style={{ left: position.x, top: position.y }}
     >
       {items.map((item, index) => (
-        <button
-          key={index}
-          className={`context-menu-item ${item.danger ? 'context-menu-item-danger' : ''} ${item.disabled ? 'context-menu-item-disabled' : ''}`}
-          onClick={() => {
-            if (!item.disabled) {
-              item.onClick()
-              onClose()
-            }
-          }}
-          disabled={item.disabled}
-        >
-          {item.icon && <span className="context-menu-item-icon">{item.icon}</span>}
-          <span className="context-menu-item-label">{item.label}</span>
-        </button>
+        item.isDivider ? (
+          <div key={index} className="context-menu-divider" />
+        ) : (
+          <button
+            key={index}
+            className={`context-menu-item ${item.danger ? 'context-menu-item-danger' : ''} ${item.disabled ? 'context-menu-item-disabled' : ''}`}
+            onClick={() => {
+              if (!item.disabled) {
+                item.onClick()
+                onClose()
+              }
+            }}
+            disabled={item.disabled}
+          >
+            {item.icon && <span className="context-menu-item-icon">{item.icon}</span>}
+            <span className="context-menu-item-label">{item.label}</span>
+          </button>
+        )
       ))}
     </div>
   )

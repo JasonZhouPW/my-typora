@@ -18,11 +18,6 @@ export function registerFileHandlers() {
           type: entry.isDirectory() ? 'folder' : 'file',
           isDirectory: entry.isDirectory(),
         }))
-        .sort((a, b) => {
-          // Folders first, then files, both alphabetically
-          if (a.type === b.type) return a.name.localeCompare(b.name)
-          return a.type === 'folder' ? -1 : 1
-        })
       return items
     } catch (error) {
       console.error('Failed to read directory:', error)
@@ -108,6 +103,46 @@ export function registerFileHandlers() {
       console.error('Failed to delete:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       return { success: false, error: errorMessage }
+    }
+  })
+
+  // Get file stats for sorting
+  ipcMain.handle('file:get-stats', async (_event, dirPath?: string) => {
+    const targetPath = dirPath || os.homedir()
+    try {
+      const entries = await fs.readdir(targetPath, { withFileTypes: true })
+
+      const itemsWithStats = await Promise.all(
+        entries
+          .filter(entry => !entry.name.startsWith('.'))
+          .map(async (entry) => {
+            const filePath = path.join(targetPath, entry.name)
+            try {
+              const stats = await fs.stat(filePath)
+              return {
+                name: entry.name,
+                path: filePath,
+                type: entry.isDirectory() ? 'folder' : 'file',
+                isDirectory: entry.isDirectory(),
+                mtime: stats.mtimeMs,
+                birthtime: stats.birthtimeMs,
+              }
+            } catch {
+              return {
+                name: entry.name,
+                path: filePath,
+                type: entry.isDirectory() ? 'folder' : 'file',
+                isDirectory: entry.isDirectory(),
+                mtime: 0,
+                birthtime: 0,
+              }
+            }
+          })
+      )
+      return itemsWithStats
+    } catch (error) {
+      console.error('Failed to get file stats:', error)
+      return []
     }
   })
 }

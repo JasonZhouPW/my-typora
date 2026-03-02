@@ -26,4 +26,8 @@ export const fileOperations = {
   async deleteFile(itemPath: string, isDirectory: boolean): Promise<{ success: boolean; error?: string }> {
     return await window.electronAPI.file.delete(itemPath, isDirectory)
   },
+
+  async getStatsWithTimes(dirPath?: string): Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean; mtime: number; birthtime: number }>> {
+    return await window.electronAPI.file.getStats(dirPath)
+  },
 }

@@ -9,6 +9,8 @@ interface FileItem {
   path: string
   type: 'folder' | 'file'
   isDirectory: boolean
+  mtime?: number
+  birthtime?: number
 }
 
 interface ContextMenuState {
@@ -18,6 +20,9 @@ interface ContextMenuState {
   item: FileItem | null
   isOnItem: boolean
 }
+
+type SortBy = 'name' | 'mtime' | 'birthtime'
+type SortOrder = 'asc' | 'desc'
 
 export default function FileExplorer() {
   const { setFilePath, setInitialContent, setModified } = useDocumentStore()
@@ -32,6 +37,8 @@ export default function FileExplorer() {
     item: null,
     isOnItem: false,
   })
+  const [sortBy, setSortBy] = useState<SortBy>('name')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
   // Load home directory on mount
   useEffect(() => {
@@ -40,12 +47,47 @@ export default function FileExplorer() {
 
   const loadDirectory = async (dirPath: string) => {
     try {
-      const result = await fileOperations.readDir(dirPath || undefined)
+      const result = await fileOperations.getStatsWithTimes(dirPath || undefined)
       setCurrentPath(dirPath === '' ? 'Home' : dirPath)
-      setItems(result)
+      const sorted = sortItems(result)
+      setItems(sorted)
     } catch (error) {
       console.error('Failed to load directory:', error)
       setItems([])
+    }
+  }
+
+  const sortItems = (itemsToSort: FileItem[]): FileItem[] => {
+    return [...itemsToSort].sort((a, b) => {
+      // Folders always first
+      if (a.isDirectory && !b.isDirectory) return -1
+      if (!a.isDirectory && b.isDirectory) return 1
+
+      let comparison = 0
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name, 'zh-CN')
+          break
+        case 'mtime':
+          comparison = (a.mtime || 0) - (b.mtime || 0)
+          break
+        case 'birthtime':
+          comparison = (a.birthtime || 0) - (b.birthtime || 0)
+          break
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+  }
+
+  const handleSortChange = (newSortBy: SortBy) => {
+    if (sortBy === newSortBy) {
+      // Toggle order if same sort criterion
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Change sort criterion, reset to asc
+      setSortBy(newSortBy)
+      setSortOrder('asc')
     }
   }
 
@@ -165,6 +207,30 @@ export default function FileExplorer() {
       onClick: handleCreateFile,
       icon: '📄',
     },
+    // Sort submenu
+    {
+      label: '排序方式',
+      icon: '🔀',
+      onClick: () => {},
+      disabled: true,
+    },
+    {
+      label: `  ${sortBy === 'name' ? '•' : '  '} 文件名`,
+      onClick: () => handleSortChange('name'),
+      icon: sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '  ',
+    },
+    {
+      label: `  ${sortBy === 'mtime' ? '•' : '  '} 修改时间`,
+      onClick: () => handleSortChange('mtime'),
+      icon: sortBy === 'mtime' ? (sortOrder === 'asc' ? '↑' : '↓') : '  ',
+    },
+    {
+      label: `  ${sortBy === 'birthtime' ? '•' : '  '} 创建时间`,
+      onClick: () => handleSortChange('birthtime'),
+      icon: sortBy === 'birthtime' ? (sortOrder === 'asc' ? '↑' : '↓') : '  ',
+    },
+    // Divider
+    { label: '', onClick: () => {}, disabled: true, isDivider: true } as any,
     ...(contextMenu.isOnItem && contextMenu.item
       ? [
           {
@@ -181,9 +247,27 @@ export default function FileExplorer() {
     <div className="file-explorer">
       {/* Header */}
       <div className="file-explorer-header">
-        <h3 className="file-explorer-title">
-          <span>📂</span> 文件
-        </h3>
+        <div className="file-explorer-header-left">
+          <h3 className="file-explorer-title">
+            <span>📂</span> 文件
+          </h3>
+          <div className="file-explorer-sort">
+            <button
+              className={`file-explorer-sort-button ${sortBy === 'name' ? 'active' : ''}`}
+              onClick={() => handleSortChange('name')}
+              title="按文件名排序"
+            >
+              {sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : 'A-Z'}
+            </button>
+            <button
+              className={`file-explorer-sort-button ${sortBy === 'mtime' ? 'active' : ''}`}
+              onClick={() => handleSortChange('mtime')}
+              title="按修改时间排序"
+            >
+              {sortBy === 'mtime' ? (sortOrder === 'asc' ? '↑' : '↓') : '时间'}
+            </button>
+          </div>
+        </div>
         <button
           className="file-explorer-close"
           onClick={toggleSidebar}
