@@ -45,6 +45,18 @@ export default function FileExplorer() {
     loadDirectory('')
   }, [])
 
+  // Re-sort and update items when sort criteria changes
+  useEffect(() => {
+    if (items.length > 0) {
+      const sorted = sortItems(items)
+      // Only update if order actually changed (prevent infinite loop)
+      const isAlreadySorted = items.every((item, idx) => sorted[idx]?.path === item.path)
+      if (!isAlreadySorted) {
+        setItems(sorted)
+      }
+    }
+  }, [sortBy, sortOrder])
+
   const loadDirectory = async (dirPath: string) => {
     try {
       const result = await fileOperations.getStatsWithTimes(dirPath || undefined)
