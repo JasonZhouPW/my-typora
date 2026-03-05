@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useDocumentStore, useUIStore } from '../store'
 import { fileOperations } from '../utils/fileOperations'
+import { naturalCompare } from '../utils/naturalSort'
 import ContextMenu from './ContextMenu'
 import '../styles/file-explorer.css'
 
@@ -78,48 +79,7 @@ export default function FileExplorer() {
       let comparison = 0
       switch (sortBy) {
         case 'name':
-          // Parse Chinese chapter number for proper sorting (e.g., 第一章，第二章...第十一章...)
-          const parseChapterNum = (name: string): number | null => {
-            const match = name.match(/第.*?章/)
-            if (!match) return null
-
-            // Extract the number part between "第" and "章"
-            const numText = match[0].slice(1, -1) // "十一章" -> "十一"
-
-            const chineseNumMap: Record<string, number> = {
-              '零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-              '六': 6, '七': 7, '八': 8, '九': 9, '十': 10
-            }
-
-            // Parse Chinese number: handle 十一，十二，十三...
-            let result = 0
-            let temp = 0
-
-            for (const char of numText) {
-              if (char === '十') {
-                temp = temp === 0 ? 10 : temp * 10
-                result += temp
-                temp = 0
-              } else {
-                temp = chineseNumMap[char] || 0
-              }
-            }
-            result += temp
-            return result
-          }
-
-          const aChapter = parseChapterNum(a.name)
-          const bChapter = parseChapterNum(b.name)
-
-          if (aChapter !== null && bChapter !== null) {
-            comparison = aChapter - bChapter
-          } else {
-            // Fall back to localeCompare for non-chapter files
-            comparison = a.name.localeCompare(b.name, 'zh-Hans-CN', {
-              numeric: true,
-              sensitivity: 'base',
-            })
-          }
+          comparison = naturalCompare(a.name, b.name)
           break
         case 'mtime':
           comparison = (a.mtime || 0) - (b.mtime || 0)
