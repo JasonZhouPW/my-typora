@@ -27,7 +27,39 @@
     "hardenedRuntime": true,
     "gatekeeperAssess": false,
     "entitlements": "build/entitlements.mac.plist",
-    "entitlementsInherit": "build/entitlements.mac.plist"
+    "entitlementsInherit": "build/entitlements.mac.plist",
+    "extendInfo": {
+      "CFBundleDocumentTypes": [
+        {
+          "CFBundleTypeName": "Markdown Document",
+          "CFBundleTypeRole": "Editor",
+          "LSItemContentTypes": ["net.daringfireball.markdown"],
+          "LSHandlerRank": "Alternate"
+        },
+        {
+          "CFBundleTypeName": "Markdown File",
+          "CFBundleTypeRole": "Editor",
+          "LSHandlerRank": "Alternate",
+          "CFBundleTypeExtensions": ["md", "markdown", "mdown", "mkd", "mkdn", "mdwn", "mdtxt", "mdtext", "text"]
+        },
+        {
+          "CFBundleTypeName": "Text File",
+          "CFBundleTypeRole": "Editor",
+          "LSHandlerRank": "Alternate",
+          "CFBundleTypeExtensions": ["txt"]
+        }
+      ],
+      "UTExportedTypeDeclarations": [
+        {
+          "UTTypeIdentifier": "net.daringfireball.markdown",
+          "UTTypeDescription": "Markdown Document",
+          "UTTypeConformsTo": ["public.text", "public.data"],
+          "UTTypeTagSpecification": {
+            "public.filename-extension": ["md", "markdown", "mdown", "mkd", "mkdn"]
+          }
+        }
+      ]
+    }
   },
   "dmg": {
     "contents": [
