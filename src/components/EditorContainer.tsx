@@ -11,14 +11,17 @@ mermaid.initialize({
 })
 
 export default function EditorContainer() {
-  const { content, setContent, saveToStack } = useDocumentStore()
+  const { setActiveTabContent, saveActiveTabToStack, getActiveTab } = useDocumentStore()
   const { setSelection, setCurrentBlockType } = useEditorStore()
   const { showPreview, togglePreview, showEditor, toggleEditor, sliderPosition, setSliderPosition } = useUIStore()
   const [isDragging, setIsDragging] = React.useState(false)
 
+  const activeTab = getActiveTab()
+  const content = activeTab?.content || ''
+
   const handleChange = (newContent: string) => {
-    setContent(newContent)
-    saveToStack()
+    setActiveTabContent(newContent)
+    saveActiveTabToStack()
   }
 
   const handleSelectionChange = (from: number, to: number) => {

@@ -1,6 +1,7 @@
 import React from 'react'
 import EditorContainer from './components/EditorContainer'
 import FileExplorer from './components/FileExplorer'
+import TabBar from './components/TabBar'
 import { useDocumentStore, useUIStore } from './store'
 import { fileOperations } from './utils/fileOperations'
 import './styles/global.css'
@@ -104,7 +105,7 @@ Typra 是一款使用 Electron、React 和 TypeScript 构建的跨平台 Markdow
 `
 
 function App() {
-  const { filePath, setFilePath, setModified, setInitialContent } = useDocumentStore()
+  const { tabs, activeTabId, addTab, switchTab, getActiveTab, saveActiveTabToStack } = useDocumentStore()
   const { toggleSidebar, showSidebar } = useUIStore()
 
   // Use refs to store listeners so they can be properly cleaned up
@@ -116,44 +117,49 @@ function App() {
     openFileListener?: (filePath: string) => Promise<void>
   }>({})
 
-  // Set initial content on mount (Howto.md)
+  // Initialize with a default tab on mount
   React.useEffect(() => {
-    setInitialContent(HOWTO_CONTENT)
-  }, [setInitialContent])
+    if (tabs.length === 0) {
+      addTab({ content: HOWTO_CONTENT, filePath: null })
+    }
+  }, [])
+
+  // Tab switching auto-saves current tab
+  React.useEffect(() => {
+    if (activeTabId) {
+      saveActiveTabToStack()
+    }
+  }, [activeTabId])
 
   // Initialize listeners only once on mount
   React.useEffect(() => {
     const handleNew = () => {
-      setFilePath(null)
-      setModified(false)
-      setInitialContent(HOWTO_CONTENT)
+      addTab({ content: '', filePath: null })
     }
 
     const handleOpenRequest = async () => {
       const result = await fileOperations.openFile()
       if (result) {
-        setFilePath(result.path)
-        setInitialContent(result.content)
-        setModified(false)
+        addTab({ content: result.content, filePath: result.path })
       }
     }
 
     const handleSaveRequest = async () => {
-      if (filePath) {
-        const { content } = useDocumentStore.getState()
-        await fileOperations.saveFile(filePath, content)
-        setModified(false)
+      const activeTab = getActiveTab()
+      if (activeTab?.filePath) {
+        await fileOperations.saveFile(activeTab.filePath, activeTab.content)
       } else {
         await handleSaveAsRequest()
       }
     }
 
     const handleSaveAsRequest = async () => {
-      const { content } = useDocumentStore.getState()
-      const newFilePath = await fileOperations.saveAsFile(content)
+      const activeTab = getActiveTab()
+      if (!activeTab) return
+
+      const newFilePath = await fileOperations.saveAsFile(activeTab.content)
       if (newFilePath) {
-        setFilePath(newFilePath)
-        setModified(false)
+        useDocumentStore.getState().updateActiveTab?.({ filePath: newFilePath })
       }
     }
 
@@ -161,9 +167,13 @@ function App() {
       try {
         const result = await fileOperations.readFile(file)
         if (result) {
-          setFilePath(result.path)
-          setInitialContent(result.content)
-          setModified(false)
+          // Check if file is already open in a tab
+          const existingTab = tabs.find(t => t.filePath === result.path)
+          if (existingTab) {
+            switchTab(existingTab.id)
+          } else {
+            addTab({ content: result.content, filePath: result.path })
+          }
         }
       } catch (error) {
         console.error('Failed to open recent file:', error)
@@ -204,7 +214,11 @@ function App() {
         window.electronAPI.removeListener('file:open-file', listenersRef.current.openFileListener)
       }
     }
-  }, []) // Empty dependency array - only run on mount
+  }, [activeTabId]) // Re-bind when activeTab changes for save operations
+
+  const handleNewTab = () => {
+    addTab({ content: '', filePath: null })
+  }
 
   return (
     <div className="app-container">
@@ -219,6 +233,7 @@ function App() {
           </button>
         </div>
       </header>
+      <TabBar onNewTab={handleNewTab} />
       <div className="app-main">
         {showSidebar && <FileExplorer />}
         <div className="content-area">

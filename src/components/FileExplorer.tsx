@@ -26,7 +26,7 @@ type SortBy = 'name' | 'mtime' | 'birthtime'
 type SortOrder = 'asc' | 'desc'
 
 export default function FileExplorer() {
-  const { setFilePath, setInitialContent, setModified } = useDocumentStore()
+  const { addTab, switchTab, tabs } = useDocumentStore()
   const { toggleSidebar } = useUIStore()
   const [currentPath, setCurrentPath] = useState<string>('')
   const [items, setItems] = useState<FileItem[]>([])
@@ -115,9 +115,13 @@ export default function FileExplorer() {
       try {
         const content = await fileOperations.readFile(item.path)
         if (content) {
-          setFilePath(content.path)
-          setInitialContent(content.content)
-          setModified(false)
+          // Check if file is already open in a tab
+          const existingTab = tabs.find(t => t.filePath === content.path)
+          if (existingTab) {
+            switchTab(existingTab.id)
+          } else {
+            addTab({ content: content.content, filePath: content.path })
+          }
         }
       } catch (error) {
         console.error('Failed to open file:', error)
