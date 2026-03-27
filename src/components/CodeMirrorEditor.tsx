@@ -18,6 +18,7 @@ export default function CodeMirrorEditor({
   content,
   onChange,
   onSelectionChange,
+  viewRef: externalViewRef,
 }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -38,6 +39,13 @@ export default function CodeMirrorEditor({
           ...defaultKeymap,
           ...historyKeymap,
           ...searchKeymap,
+          {
+            key: 'Ctrl-h',
+            run: () => {
+              // Open search panel - this is handled by search({ top: true })
+              return true
+            }
+          }
         ]),
         EditorView.theme({
           '&': { height: '100%', fontSize: '16px' },
@@ -73,8 +81,8 @@ export default function CodeMirrorEditor({
 
     viewRef.current = view
 
-    if (props.viewRef) {
-      (props.viewRef as React.MutableRefObject<EditorView | null>).current = view
+    if (externalViewRef) {
+      (externalViewRef as React.MutableRefObject<EditorView | null>).current = view
     }
 
     return () => {
