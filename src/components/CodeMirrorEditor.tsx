@@ -30,7 +30,7 @@ export default function CodeMirrorEditor({
       doc: content,
       extensions: [
         markdown({ codeLanguages: languages }),
-        search(),
+        search({ top: true }),
         highlightSelectionMatches(),
         history(),
         drawSelection(),
