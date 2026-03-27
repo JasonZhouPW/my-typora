@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDocumentStore, useEditorStore, useUIStore } from '../store'
 import CodeMirrorEditor from './CodeMirrorEditor'
 import { markdownTransformer } from '../utils/markdownTransformer'
 import mermaid from 'mermaid'
+import { EditorView } from '@codemirror/view'
 import '../styles/editor-container.css'
 
 mermaid.initialize({
@@ -13,8 +14,9 @@ mermaid.initialize({
 export default function EditorContainer() {
   const { setActiveTabContent, saveActiveTabToStack, getActiveTab } = useDocumentStore()
   const { setSelection, setCurrentBlockType } = useEditorStore()
-  const { showPreview, togglePreview, showEditor, toggleEditor, sliderPosition, setSliderPosition } = useUIStore()
+  const { showPreview, togglePreview, showEditor, toggleEditor, sliderPosition, setSliderPosition, isFocusMode, toggleFocusMode, isFullscreen, setFullscreen, theme, toggleTheme } = useUIStore()
   const [isDragging, setIsDragging] = React.useState(false)
+  const editorViewRef = useRef<EditorView | null>(null)
 
   const activeTab = getActiveTab()
   const content = activeTab?.content || ''
@@ -115,10 +117,48 @@ export default function EditorContainer() {
     renderMermaid()
   }, [mermaidCode])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Focus mode: Ctrl+Shift+F
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault()
+        toggleFocusMode()
+      }
+      // Fullscreen: F11
+      if (e.key === 'F11') {
+        e.preventDefault()
+        handleFullscreenToggle()
+      }
+      // Escape: exit focus mode
+      if (e.key === 'Escape' && isFocusMode) {
+        toggleFocusMode()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isFocusMode, toggleFocusMode])
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [setFullscreen])
+
+  const handleFullscreenToggle = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
+  }
+
   return (
     <div className="editor-container">
       {/* Toolbar */}
-      <div className="editor-toolbar">
+      <div className={`editor-toolbar ${isFocusMode ? 'hidden' : ''}`}>
         <div className="toolbar-group">
           <button className="toolbar-button" onClick={togglePreview}>
             <span className="toolbar-button-icon">📖</span>
@@ -127,6 +167,18 @@ export default function EditorContainer() {
           <button className="toolbar-button" onClick={toggleEditor}>
             <span className="toolbar-button-icon">✏️</span>
             {showEditor ? '隐藏编辑器' : '显示编辑器'}
+          </button>
+          <button className="toolbar-button" onClick={toggleFocusMode}>
+            <span className="toolbar-button-icon">🎯</span>
+            {isFocusMode ? '退出专注' : '专注模式'}
+          </button>
+          <button className="toolbar-button" onClick={handleFullscreenToggle}>
+            <span className="toolbar-button-icon">⛶</span>
+            {isFullscreen ? '退出全屏' : '全屏'}
+          </button>
+          <button className="toolbar-button" onClick={toggleTheme}>
+            <span className="toolbar-button-icon">🎨</span>
+            {theme === 'default' ? '白色主题' : '默认主题'}
           </button>
         </div>
       </div>
@@ -160,6 +212,7 @@ export default function EditorContainer() {
           style={{ width: !showPreview ? '100%' : (!showEditor ? '0%' : `${100 - sliderPosition}%`) }}
         >
           <CodeMirrorEditor
+            viewRef={editorViewRef}
             content={content}
             onChange={handleChange}
             onSelectionChange={handleSelectionChange}
