@@ -158,3 +158,23 @@
   align-items: center;
   gap: var(--spacing-1);
 }
+
+/* Fullscreen Exit Button */
+.fullscreen-exit-btn {
+  position: fixed;
+  top: var(--spacing-4);
+  right: var(--spacing-4);
+  z-index: var(--z-modal);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.fullscreen-exit-btn:hover {
+  background: var(--bg-tertiary);
+}

@@ -219,6 +219,17 @@ export default function EditorContainer() {
           />
         </div>
       </div>
+
+      {/* Fullscreen Exit Button */}
+      {isFullscreen && !isFocusMode && (
+        <button
+          className="fullscreen-exit-btn"
+          onClick={handleFullscreenToggle}
+          title="退出全屏 (F11)"
+        >
+          ⛶
+        </button>
+      )}
     </div>
   )
 }
