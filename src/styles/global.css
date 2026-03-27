@@ -306,3 +306,26 @@ a:hover {
   background: var(--border-light);
   margin: var(--spacing-4) 0;
 }
+
+/* Focus Mode */
+.focus-mode .app-header,
+.focus-mode .editor-toolbar,
+.focus-mode .resize-handle {
+  display: none !important;
+}
+
+.focus-mode .app-main {
+  height: 100vh;
+}
+
+.focus-mode .content-area {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-8);
+}
+
+.focus-mode .preview-panel,
+.focus-mode .editor-panel {
+  max-width: var(--preview-max-width);
+  margin: 0 auto;
+}

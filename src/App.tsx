@@ -106,7 +106,7 @@ Typra 是一款使用 Electron、React 和 TypeScript 构建的跨平台 Markdow
 
 function App() {
   const { tabs, activeTabId, addTab, switchTab, getActiveTab, saveActiveTabToStack } = useDocumentStore()
-  const { toggleSidebar, showSidebar } = useUIStore()
+  const { toggleSidebar, showSidebar, isFocusMode, theme } = useUIStore()
 
   // Use refs to store listeners so they can be properly cleaned up
   const listenersRef = React.useRef<{
@@ -123,6 +123,11 @@ function App() {
       addTab({ content: HOWTO_CONTENT, filePath: null })
     }
   }, [])
+
+  // Apply theme attribute to body
+  React.useEffect(() => {
+    document.body.setAttribute('data-theme', theme)
+  }, [theme])
 
   // Tab switching auto-saves current tab
   React.useEffect(() => {
@@ -221,7 +226,7 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isFocusMode ? 'focus-mode' : ''}`}>
       <header className="app-header">
         <h1 className="app-title">
           <span className="app-title-icon">📝</span>
