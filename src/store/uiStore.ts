@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 interface UIState {
-  theme: string
+  theme: 'default' | 'white'
   darkMode: boolean
   viewMode: 'normal' | 'focus' | 'typewriter'
   showSidebar: boolean
@@ -9,7 +9,9 @@ interface UIState {
   showPreview: boolean
   showEditor: boolean
   sliderPosition: number
-  setTheme: (theme: string) => void
+  isFocusMode: boolean
+  isFullscreen: boolean
+  setTheme: (theme: 'default' | 'white') => void
   setDarkMode: (dark: boolean) => void
   setViewMode: (mode: 'normal' | 'focus' | 'typewriter') => void
   toggleSidebar: () => void
@@ -17,6 +19,9 @@ interface UIState {
   togglePreview: () => void
   toggleEditor: () => void
   setSliderPosition: (position: number) => void
+  toggleTheme: () => void
+  toggleFocusMode: () => void
+  setFullscreen: (fullscreen: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -28,8 +33,10 @@ export const useUIStore = create<UIState>((set) => ({
   showPreview: true,
   showEditor: true,
   sliderPosition: 50,
+  isFocusMode: false,
+  isFullscreen: false,
 
-  setTheme: (theme: string) => set({ theme }),
+  setTheme: (theme: 'default' | 'white') => set({ theme }),
   setDarkMode: (dark: boolean) => set({ darkMode: dark }),
   setViewMode: (mode) => set({ viewMode: mode }),
   toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
@@ -37,4 +44,7 @@ export const useUIStore = create<UIState>((set) => ({
   togglePreview: () => set((state) => ({ showPreview: !state.showPreview })),
   toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
   setSliderPosition: (position: number) => set({ sliderPosition: position }),
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'default' ? 'white' : 'default' })),
+  toggleFocusMode: () => set((state) => ({ isFocusMode: !state.isFocusMode })),
+  setFullscreen: (fullscreen: boolean) => set({ isFullscreen: fullscreen }),
 }))
