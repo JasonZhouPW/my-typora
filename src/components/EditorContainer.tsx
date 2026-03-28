@@ -16,7 +16,10 @@ export default function EditorContainer() {
   const { setSelection, setCurrentBlockType } = useEditorStore()
   const { showPreview, togglePreview, showEditor, toggleEditor, sliderPosition, setSliderPosition, isFocusMode, toggleFocusMode, isFullscreen, setFullscreen, theme, toggleTheme } = useUIStore()
   const [isDragging, setIsDragging] = React.useState(false)
+  const [previewScale, setPreviewScale] = React.useState(1)
   const editorViewRef = useRef<EditorView | null>(null)
+  // Touch gesture state
+  const lastTouchDistanceRef = useRef<number | null>(null)
 
   const activeTab = getActiveTab()
   const content = activeTab?.content || ''
@@ -117,6 +120,43 @@ export default function EditorContainer() {
     renderMermaid()
   }, [mermaidCode])
 
+  // Zoom handlers
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -0.1 : 0.1
+      setPreviewScale(prev => Math.min(3, Math.max(0.25, prev + delta)))
+    }
+  }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX
+      const dy = e.touches[1].clientY - e.touches[0].clientY
+      lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastTouchDistanceRef.current !== null) {
+      e.preventDefault()
+      const dx = e.touches[1].clientX - e.touches[0].clientX
+      const dy = e.touches[1].clientY - e.touches[0].clientY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      const delta = (distance - lastTouchDistanceRef.current) * 0.005
+      setPreviewScale(prev => Math.min(3, Math.max(0.25, prev + delta)))
+      lastTouchDistanceRef.current = distance
+    }
+  }
+
+  const handleTouchEnd = () => {
+    lastTouchDistanceRef.current = null
+  }
+
+  const handleZoomIn = () => setPreviewScale(prev => Math.min(3, prev + 0.25))
+  const handleZoomOut = () => setPreviewScale(prev => Math.max(0.25, prev - 0.25))
+  const handleZoomReset = () => setPreviewScale(1)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Focus mode: Ctrl+Shift+F
@@ -180,6 +220,17 @@ export default function EditorContainer() {
             <span className="toolbar-button-icon">🎨</span>
             {theme === 'default' ? '白色主题' : '默认主题'}
           </button>
+          <div className="toolbar-divider" />
+          <button className="toolbar-button" onClick={handleZoomOut} title="缩小">
+            <span className="toolbar-button-icon">➖</span>
+          </button>
+          <span className="zoom-level">{Math.round(previewScale * 100)}%</span>
+          <button className="toolbar-button" onClick={handleZoomIn} title="放大">
+            <span className="toolbar-button-icon">➕</span>
+          </button>
+          <button className="toolbar-button" onClick={handleZoomReset} title="重置缩放">
+            <span className="toolbar-button-icon">🔄</span>
+          </button>
         </div>
       </div>
 
@@ -189,9 +240,14 @@ export default function EditorContainer() {
         <div
           className={`preview-panel ${!showPreview ? 'hidden' : ''}`}
           style={{ width: !showPreview ? '0%' : (!showEditor ? '100%' : `${sliderPosition}%`) }}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           <div
             className="markdown-preview"
+            style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left' }}
             dangerouslySetInnerHTML={{ __html: previewHtml }}
           />
         </div>
