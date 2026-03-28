@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 
+const RECENT_FILES_KEY = 'typra-recent-files'
+const MAX_RECENT_FILES = 10
+
 export interface Tab {
   id: string
   filePath: string | null
@@ -13,6 +16,7 @@ export interface Tab {
 interface DocumentState {
   tabs: Tab[]
   activeTabId: string | null
+  recentFiles: string[]
   // Tab management actions
   addTab: (tab: Partial<Omit<Tab, 'id' | 'undoStack' | 'redoStack'>>) => string
   closeTab: (tabId: string) => void
@@ -26,6 +30,9 @@ interface DocumentState {
   redo: () => void
   // Helper to get active tab
   getActiveTab: () => Tab | undefined
+  // Recent files actions
+  addRecentFile: (filePath: string) => void
+  clearRecentFiles: () => void
 }
 
 function createTab(content: string = '', filePath: string | null = null, isModified: boolean = false): Tab {
@@ -40,9 +47,29 @@ function createTab(content: string = '', filePath: string | null = null, isModif
   }
 }
 
+// Helper to load recent files from localStorage
+function loadRecentFiles(): string[] {
+  try {
+    const stored = localStorage.getItem(RECENT_FILES_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+// Helper to save recent files to localStorage
+function saveRecentFiles(files: string[]) {
+  try {
+    localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(files))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   tabs: [],
   activeTabId: null,
+  recentFiles: loadRecentFiles(),
 
   getActiveTab: () => {
     const { tabs, activeTabId } = get()
@@ -188,5 +215,20 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
           : tab
       ),
     })
+  },
+
+  addRecentFile: (filePath: string) => {
+    const { recentFiles } = get()
+    // Remove if already exists
+    const filtered = recentFiles.filter(f => f !== filePath)
+    // Add to front
+    const newRecent = [filePath, ...filtered].slice(0, MAX_RECENT_FILES)
+    saveRecentFiles(newRecent)
+    set({ recentFiles: newRecent })
+  },
+
+  clearRecentFiles: () => {
+    saveRecentFiles([])
+    set({ recentFiles: [] })
   },
 }))

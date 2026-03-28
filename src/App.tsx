@@ -2,6 +2,7 @@ import React from 'react'
 import EditorContainer from './components/EditorContainer'
 import FileExplorer from './components/FileExplorer'
 import TabBar from './components/TabBar'
+import RecentFiles from './components/RecentFiles'
 import { useDocumentStore, useUIStore } from './store'
 import { fileOperations } from './utils/fileOperations'
 import './styles/global.css'
@@ -105,7 +106,7 @@ Typra 是一款使用 Electron、React 和 TypeScript 构建的跨平台 Markdow
 `
 
 function App() {
-  const { tabs, activeTabId, addTab, switchTab, getActiveTab, saveActiveTabToStack } = useDocumentStore()
+  const { tabs, activeTabId, addTab, switchTab, getActiveTab, saveActiveTabToStack, addRecentFile } = useDocumentStore()
   const { toggleSidebar, showSidebar, isFocusMode, theme } = useUIStore()
 
   // Use refs to store listeners so they can be properly cleaned up
@@ -146,6 +147,7 @@ function App() {
       const result = await fileOperations.openFile()
       if (result) {
         addTab({ content: result.content, filePath: result.path })
+        addRecentFile(result.path)
       }
     }
 
@@ -179,6 +181,7 @@ function App() {
           } else {
             addTab({ content: result.content, filePath: result.path })
           }
+          addRecentFile(result.path)
         }
       } catch (error) {
         console.error('Failed to open recent file:', error)
@@ -240,7 +243,12 @@ function App() {
       </header>
       <TabBar onNewTab={handleNewTab} />
       <div className="app-main">
-        {showSidebar && <FileExplorer />}
+        {showSidebar && (
+          <div className="sidebar">
+            <RecentFiles />
+            <FileExplorer />
+          </div>
+        )}
         <div className="content-area">
           <EditorContainer />
         </div>
