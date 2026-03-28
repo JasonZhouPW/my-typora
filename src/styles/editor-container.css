@@ -134,6 +134,8 @@
 /* Single Pane Mode */
 .editor-layout.single-preview .preview-panel {
   flex: 1;
+  max-width: 100%;
+  padding: var(--spacing-4);
 }
 
 .editor-layout.single-preview .editor-panel {
@@ -146,6 +148,12 @@
 
 .editor-layout.single-editor .preview-panel {
   display: none;
+}
+
+/* Focus Mode - Preview only fills width */
+.focus-mode.editor-layout.single-preview .preview-panel {
+  max-width: 100%;
+  padding: var(--spacing-8);
 }
 
 /* Status Bar */
