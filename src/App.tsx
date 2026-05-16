@@ -127,17 +127,14 @@ function App() {
     setInsightPanelWidth,
   } = useUIStore()
   const [isResizingInsightPanel, setIsResizingInsightPanel] = React.useState(false)
-
-  // Use refs to store listeners so they can be properly cleaned up
-  const listenersRef = React.useRef<{
-    newListener?: () => void
-    openListener?: () => Promise<void>
-    saveListener?: () => Promise<void>
-    saveAsListener?: () => Promise<void>
-    openFileListener?: (filePath: string) => Promise<void>
-    copyMarkdownListener?: () => Promise<void>
-    copyHtmlListener?: () => Promise<void>
-  }>({})
+  const menuHandlersRef = React.useRef({
+    open: async () => {},
+    save: async () => {},
+    saveAs: async () => {},
+    openFile: async (_filePath: string) => {},
+    copyMarkdown: async () => {},
+    copyHtml: async () => {},
+  })
 
   // Initialize with a default tab on mount
   React.useEffect(() => {
@@ -300,57 +297,45 @@ function App() {
     await navigator.clipboard?.writeText(markdownTransformer.transform(activeTab.content))
   }, [getActiveTab])
 
-  // Initialize listeners only once on mount
   React.useEffect(() => {
-    const handleNew = () => {
-      addTab({ content: '', filePath: null })
+    menuHandlersRef.current = {
+      open: handleOpenRequest,
+      save: handleSaveRequest,
+      saveAs: handleSaveAsRequest,
+      openFile: handleOpenFileRequest,
+      copyMarkdown: handleCopyMarkdownExport,
+      copyHtml: handleCopyHtmlExport,
     }
+  }, [handleCopyHtmlExport, handleCopyMarkdownExport, handleOpenFileRequest, handleOpenRequest, handleSaveAsRequest, handleSaveRequest])
 
-    // Store listeners in ref for cleanup
-    listenersRef.current = {
-      newListener: handleNew,
-      openListener: handleOpenRequest,
-      saveListener: handleSaveRequest,
-      saveAsListener: handleSaveAsRequest,
-      openFileListener: handleOpenFileRequest,
-      copyMarkdownListener: handleCopyMarkdownExport,
-      copyHtmlListener: handleCopyHtmlExport,
-    }
+  // Bind Electron menu listeners once; call current handlers through refs.
+  React.useEffect(() => {
+    const handleNew = () => addTab({ content: '', filePath: null })
+    const handleOpen = () => void menuHandlersRef.current.open()
+    const handleSave = () => void menuHandlersRef.current.save()
+    const handleSaveAs = () => void menuHandlersRef.current.saveAs()
+    const handleOpenFile = (_event: unknown, filePath: string) => void menuHandlersRef.current.openFile(filePath)
+    const handleCopyMarkdown = () => void menuHandlersRef.current.copyMarkdown()
+    const handleCopyHtml = () => void menuHandlersRef.current.copyHtml()
 
-    // Add listeners once
     window.electronAPI.on('file:new', handleNew)
-    window.electronAPI.on('file:open-request', handleOpenRequest)
-    window.electronAPI.on('file:save-request', handleSaveRequest)
-    window.electronAPI.on('file:save-as-request', handleSaveAsRequest)
-    window.electronAPI.on('file:open-file', handleOpenFileRequest)
-    window.electronAPI.on('export:copy-markdown', handleCopyMarkdownExport)
-    window.electronAPI.on('export:copy-html', handleCopyHtmlExport)
+    window.electronAPI.on('file:open-request', handleOpen)
+    window.electronAPI.on('file:save-request', handleSave)
+    window.electronAPI.on('file:save-as-request', handleSaveAs)
+    window.electronAPI.on('file:open-file', handleOpenFile)
+    window.electronAPI.on('export:copy-markdown', handleCopyMarkdown)
+    window.electronAPI.on('export:copy-html', handleCopyHtml)
 
-    // Cleanup on unmount only
     return () => {
-      if (listenersRef.current.newListener) {
-        window.electronAPI.removeListener('file:new', listenersRef.current.newListener)
-      }
-      if (listenersRef.current.openListener) {
-        window.electronAPI.removeListener('file:open-request', listenersRef.current.openListener)
-      }
-      if (listenersRef.current.saveListener) {
-        window.electronAPI.removeListener('file:save-request', listenersRef.current.saveListener)
-      }
-      if (listenersRef.current.saveAsListener) {
-        window.electronAPI.removeListener('file:save-as-request', listenersRef.current.saveAsListener)
-      }
-      if (listenersRef.current.openFileListener) {
-        window.electronAPI.removeListener('file:open-file', listenersRef.current.openFileListener)
-      }
-      if (listenersRef.current.copyMarkdownListener) {
-        window.electronAPI.removeListener('export:copy-markdown', listenersRef.current.copyMarkdownListener)
-      }
-      if (listenersRef.current.copyHtmlListener) {
-        window.electronAPI.removeListener('export:copy-html', listenersRef.current.copyHtmlListener)
-      }
+      window.electronAPI.removeListener('file:new', handleNew)
+      window.electronAPI.removeListener('file:open-request', handleOpen)
+      window.electronAPI.removeListener('file:save-request', handleSave)
+      window.electronAPI.removeListener('file:save-as-request', handleSaveAs)
+      window.electronAPI.removeListener('file:open-file', handleOpenFile)
+      window.electronAPI.removeListener('export:copy-markdown', handleCopyMarkdown)
+      window.electronAPI.removeListener('export:copy-html', handleCopyHtml)
     }
-  }, [activeTabId, addTab, handleCopyHtmlExport, handleCopyMarkdownExport, handleOpenFileRequest, handleOpenRequest, handleSaveAsRequest, handleSaveRequest]) // Re-bind when activeTab changes for save operations
+  }, [addTab])
 
   const commands = [
     { id: 'new', label: 'New document', hint: 'Create an untitled tab', run: handleNewTab },
