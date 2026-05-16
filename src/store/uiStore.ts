@@ -5,7 +5,6 @@ interface UIState {
   darkMode: boolean
   viewMode: 'normal' | 'focus' | 'typewriter'
   activeSidebarSection: 'files' | 'tags' | 'search' | 'recent'
-  activeInsightTab: 'preview' | 'export'
   showSidebar: boolean
   showTableOfContents: boolean
   showInsightPanel: boolean
@@ -22,7 +21,6 @@ interface UIState {
   setDarkMode: (dark: boolean) => void
   setViewMode: (mode: 'normal' | 'focus' | 'typewriter') => void
   setActiveSidebarSection: (section: 'files' | 'tags' | 'search' | 'recent') => void
-  setActiveInsightTab: (tab: 'preview' | 'export') => void
   toggleSidebar: () => void
   toggleTableOfContents: () => void
   toggleInsightPanel: () => void
@@ -45,7 +43,6 @@ export const useUIStore = create<UIState>((set) => ({
   darkMode: false,
   viewMode: 'normal',
   activeSidebarSection: 'files',
-  activeInsightTab: 'preview',
   showSidebar: true,
   showTableOfContents: false,
   showInsightPanel: true,
@@ -63,17 +60,16 @@ export const useUIStore = create<UIState>((set) => ({
   setDarkMode: (dark: boolean) => set({ darkMode: dark }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setActiveSidebarSection: (section) => set({ activeSidebarSection: section, showSidebar: true }),
-  setActiveInsightTab: (tab) => set({ activeInsightTab: tab, showInsightPanel: true }),
   toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
   toggleTableOfContents: () => set((state) => ({ showTableOfContents: !state.showTableOfContents })),
   toggleInsightPanel: () => set((state) => ({ showInsightPanel: !state.showInsightPanel })),
   togglePreview: () => set((state) => ({
     showPreview: !state.showPreview,
-    showInsightPanel: true,
-    activeInsightTab: state.showPreview ? 'export' : 'preview',
+    showInsightPanel: !state.showPreview,
+    isPreviewMaximized: state.showPreview ? false : state.isPreviewMaximized,
   })),
   toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
-  togglePreviewMaximized: () => set((state) => ({ isPreviewMaximized: !state.isPreviewMaximized, activeInsightTab: 'preview' })),
+  togglePreviewMaximized: () => set((state) => ({ isPreviewMaximized: !state.isPreviewMaximized, showPreview: true, showInsightPanel: true })),
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
   toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
   setGlobalSearchOpen: (open) => set({ isGlobalSearchOpen: open }),

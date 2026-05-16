@@ -76,6 +76,33 @@ function updateMenu() {
         },
         { type: 'separator' },
         {
+          label: 'Export',
+          submenu: [
+            {
+              label: 'Copy Markdown',
+              click: () => {
+                const focusedWindow = BrowserWindow.getFocusedWindow()
+                if (focusedWindow) {
+                  focusedWindow.webContents.send('export:copy-markdown')
+                }
+              },
+            },
+            {
+              label: 'Copy HTML Preview',
+              click: () => {
+                const focusedWindow = BrowserWindow.getFocusedWindow()
+                if (focusedWindow) {
+                  focusedWindow.webContents.send('export:copy-html')
+                }
+              },
+            },
+            { type: 'separator' },
+            { label: 'Export PDF', enabled: false },
+            { label: 'Export DOCX', enabled: false },
+          ],
+        },
+        { type: 'separator' },
+        {
           label: process.platform === 'darwin' ? 'Quit Typora' : 'Exit',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Alt+F4',
           click: () => {

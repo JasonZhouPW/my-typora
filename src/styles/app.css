@@ -309,8 +309,7 @@ kbd {
 }
 
 .tag-list,
-.saved-searches,
-.export-panel {
+.saved-searches {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
@@ -319,7 +318,6 @@ kbd {
 
 .tag-row,
 .saved-search-row,
-.export-action,
 .search-result,
 .command-row {
   display: flex;
@@ -384,21 +382,6 @@ kbd {
   width: calc(100% / var(--preview-scale, 1));
   max-width: none;
   padding: var(--spacing-4);
-}
-
-.export-panel p {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.export-action {
-  background: var(--bg-primary);
-  border-color: var(--border-light);
-}
-
-.export-action.disabled {
-  color: var(--text-disabled);
-  background: var(--bg-tertiary);
 }
 
 .empty-state {

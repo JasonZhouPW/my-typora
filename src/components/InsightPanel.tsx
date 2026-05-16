@@ -10,7 +10,7 @@ mermaid.initialize({
 
 export default function InsightPanel() {
   const { getActiveTab } = useDocumentStore()
-  const { activeInsightTab, setActiveInsightTab, showPreview, isPreviewMaximized, togglePreviewMaximized } = useUIStore()
+  const { showPreview, isPreviewMaximized, togglePreviewMaximized } = useUIStore()
   const activeTab = getActiveTab()
   const [previewScale, setPreviewScale] = React.useState(1)
   const content = activeTab?.content ?? ''
@@ -19,7 +19,7 @@ export default function InsightPanel() {
 
   React.useEffect(() => {
     const renderMermaid = async () => {
-      if (activeInsightTab !== 'preview' || mermaidCode.length === 0) return
+      if (!showPreview || mermaidCode.length === 0) return
       await new Promise(resolve => setTimeout(resolve, 100))
 
       const previewContainer = document.querySelector('.insight-preview .markdown-preview')
@@ -42,27 +42,12 @@ export default function InsightPanel() {
     }
 
     renderMermaid()
-  }, [activeInsightTab, activeTab?.id, mermaidCode])
+  }, [activeTab?.id, mermaidCode, showPreview])
 
   return (
     <aside className={`insight-panel ${isPreviewMaximized ? 'maximized' : ''}`}>
-      <div className="insight-tabs">
-        {[
-          ...(showPreview ? [['preview', 'Preview']] : []),
-          ['export', 'Export'],
-        ].map(([tab, label]) => (
-          <button
-            key={tab}
-            className={`insight-tab ${activeInsightTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveInsightTab(tab as typeof activeInsightTab)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       <div className="insight-body">
-        {showPreview && activeInsightTab === 'preview' && (
+        {showPreview && (
           <div className="insight-preview">
             <div className="preview-tools">
               <button onClick={() => setPreviewScale(scale => Math.max(0.5, scale - 0.1))}>−</button>
@@ -80,15 +65,6 @@ export default function InsightPanel() {
           </div>
         )}
 
-        {activeInsightTab === 'export' && (
-          <div className="export-panel">
-            <button className="export-action" onClick={() => navigator.clipboard?.writeText(content)}>Copy Markdown</button>
-            <button className="export-action" onClick={() => navigator.clipboard?.writeText(previewHtml)}>Copy HTML Preview</button>
-            <button className="export-action disabled" disabled>Export PDF</button>
-            <button className="export-action disabled" disabled>Export DOCX</button>
-            <p>PDF and DOCX export need packaging support before they can be enabled.</p>
-          </div>
-        )}
       </div>
     </aside>
   )

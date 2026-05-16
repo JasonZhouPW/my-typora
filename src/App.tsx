@@ -8,6 +8,7 @@ import CommandPalette from './components/CommandPalette'
 import GlobalSearch from './components/GlobalSearch'
 import { useDocumentStore, useUIStore } from './store'
 import { fileOperations } from './utils/fileOperations'
+import { markdownTransformer } from './utils/markdownTransformer'
 import './styles/global.css'
 import './styles/app.css'
 
@@ -117,7 +118,6 @@ function App() {
     showEditor,
     isFocusMode,
     theme,
-    activeInsightTab,
     isPreviewMaximized,
     insightPanelWidth,
     toggleSidebar,
@@ -135,6 +135,8 @@ function App() {
     saveListener?: () => Promise<void>
     saveAsListener?: () => Promise<void>
     openFileListener?: (filePath: string) => Promise<void>
+    copyMarkdownListener?: () => Promise<void>
+    copyHtmlListener?: () => Promise<void>
   }>({})
 
   // Initialize with a default tab on mount
@@ -179,7 +181,7 @@ function App() {
   }, [isResizingInsightPanel, setInsightPanelWidth])
 
   React.useEffect(() => {
-    if (!showPreview || !showInsightPanel || isFocusMode || activeInsightTab !== 'preview') return
+    if (!showPreview || !showInsightPanel || isFocusMode) return
 
     let syncingFrom: 'editor' | 'preview' | null = null
     let frame = 0
@@ -231,7 +233,7 @@ function App() {
       cancelAnimationFrame(retryFrame)
       cleanupListeners?.()
     }
-  }, [activeTabId, activeInsightTab, showPreview, showInsightPanel, isFocusMode])
+  }, [activeTabId, showPreview, showInsightPanel, isFocusMode])
 
   const handleNewTab = React.useCallback(() => {
     addTab({ content: '', filePath: null })
@@ -286,6 +288,18 @@ function App() {
     }
   }, [addRecentFile, addTab, switchTab])
 
+  const handleCopyMarkdownExport = React.useCallback(async () => {
+    const activeTab = getActiveTab()
+    if (!activeTab) return
+    await navigator.clipboard?.writeText(activeTab.content)
+  }, [getActiveTab])
+
+  const handleCopyHtmlExport = React.useCallback(async () => {
+    const activeTab = getActiveTab()
+    if (!activeTab) return
+    await navigator.clipboard?.writeText(markdownTransformer.transform(activeTab.content))
+  }, [getActiveTab])
+
   // Initialize listeners only once on mount
   React.useEffect(() => {
     const handleNew = () => {
@@ -299,6 +313,8 @@ function App() {
       saveListener: handleSaveRequest,
       saveAsListener: handleSaveAsRequest,
       openFileListener: handleOpenFileRequest,
+      copyMarkdownListener: handleCopyMarkdownExport,
+      copyHtmlListener: handleCopyHtmlExport,
     }
 
     // Add listeners once
@@ -307,6 +323,8 @@ function App() {
     window.electronAPI.on('file:save-request', handleSaveRequest)
     window.electronAPI.on('file:save-as-request', handleSaveAsRequest)
     window.electronAPI.on('file:open-file', handleOpenFileRequest)
+    window.electronAPI.on('export:copy-markdown', handleCopyMarkdownExport)
+    window.electronAPI.on('export:copy-html', handleCopyHtmlExport)
 
     // Cleanup on unmount only
     return () => {
@@ -325,8 +343,14 @@ function App() {
       if (listenersRef.current.openFileListener) {
         window.electronAPI.removeListener('file:open-file', listenersRef.current.openFileListener)
       }
+      if (listenersRef.current.copyMarkdownListener) {
+        window.electronAPI.removeListener('export:copy-markdown', listenersRef.current.copyMarkdownListener)
+      }
+      if (listenersRef.current.copyHtmlListener) {
+        window.electronAPI.removeListener('export:copy-html', listenersRef.current.copyHtmlListener)
+      }
     }
-  }, [activeTabId, addTab, handleOpenFileRequest, handleOpenRequest, handleSaveAsRequest, handleSaveRequest]) // Re-bind when activeTab changes for save operations
+  }, [activeTabId, addTab, handleCopyHtmlExport, handleCopyMarkdownExport, handleOpenFileRequest, handleOpenRequest, handleSaveAsRequest, handleSaveRequest]) // Re-bind when activeTab changes for save operations
 
   const commands = [
     { id: 'new', label: 'New document', hint: 'Create an untitled tab', run: handleNewTab },
@@ -359,9 +383,9 @@ function App() {
             <EditorContainer workspaceMode />
           </div>
         </div>
-        {showInsightPanel && !isFocusMode && (
+        {showInsightPanel && showPreview && !isFocusMode && (
           <>
-            {showPreview && !isPreviewMaximized && (
+            {!isPreviewMaximized && (
               <div
                 className="workspace-preview-resizer"
                 onMouseDown={(event) => {
@@ -374,7 +398,7 @@ function App() {
             )}
             <div
               className={`insight-shell ${!showPreview ? 'compact' : ''}`}
-              style={{ width: isPreviewMaximized ? undefined : `${showPreview ? insightPanelWidth : 360}px` }}
+              style={{ width: isPreviewMaximized ? undefined : `${insightPanelWidth}px` }}
             >
               <InsightPanel />
             </div>

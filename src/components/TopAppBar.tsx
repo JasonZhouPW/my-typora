@@ -11,7 +11,6 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
   const { getActiveTab } = useDocumentStore()
   const {
     toggleSidebar,
-    toggleInsightPanel,
     toggleCommandPalette,
     toggleGlobalSearch,
     togglePreview,
@@ -19,7 +18,6 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
     theme,
     showSidebar,
     showPreview,
-    showInsightPanel,
   } = useUIStore()
   const activeTab = getActiveTab()
   const title = getDocumentTitle(activeTab?.filePath ?? null, activeTab?.content ?? '')
@@ -54,9 +52,6 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
           {theme === 'default' ? 'Dark' : 'Light'}
         </button>
         <button className="icon-control" onClick={toggleCommandPalette} title="Command palette">⌘</button>
-        <button className="text-control insight-toggle" onClick={toggleInsightPanel} title="Toggle insight panel">
-          {showInsightPanel ? 'Hide Info' : 'Show Info'}
-        </button>
       </div>
     </header>
   )
