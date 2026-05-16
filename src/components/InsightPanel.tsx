@@ -53,8 +53,29 @@ export default function InsightPanel() {
               <button onClick={() => setPreviewScale(scale => Math.max(0.5, scale - 0.1))}>−</button>
               <span>{Math.round(previewScale * 100)}%</span>
               <button onClick={() => setPreviewScale(scale => Math.min(2, scale + 0.1))}>+</button>
-              <button className="preview-fullscreen-button" onClick={togglePreviewMaximized}>
-                {isPreviewMaximized ? 'Exit Fullscreen' : 'Fullscreen'}
+              <button
+                className="preview-fullscreen-button"
+                onClick={togglePreviewMaximized}
+                title={isPreviewMaximized ? 'Exit fullscreen' : 'Fullscreen'}
+                aria-label={isPreviewMaximized ? 'Exit fullscreen' : 'Fullscreen'}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  {isPreviewMaximized ? (
+                    <>
+                      <path d="M9 3v6H3" />
+                      <path d="M15 3v6h6" />
+                      <path d="M9 21v-6H3" />
+                      <path d="M15 21v-6h6" />
+                    </>
+                  ) : (
+                    <>
+                      <path d="M8 3H3v5" />
+                      <path d="M16 3h5v5" />
+                      <path d="M8 21H3v-5" />
+                      <path d="M16 21h5v-5" />
+                    </>
+                  )}
+                </svg>
               </button>
             </div>
             <div

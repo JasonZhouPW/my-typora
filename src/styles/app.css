@@ -374,8 +374,18 @@ kbd {
 }
 
 .preview-tools .preview-fullscreen-button {
-  width: auto;
-  padding: 0 var(--spacing-3);
+  width: 28px;
+  padding: 0;
+}
+
+.preview-tools .preview-fullscreen-button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .insight-preview .markdown-preview {
