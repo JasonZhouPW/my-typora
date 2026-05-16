@@ -127,6 +127,7 @@ function App() {
     setInsightPanelWidth,
   } = useUIStore()
   const [isResizingInsightPanel, setIsResizingInsightPanel] = React.useState(false)
+  const saveAsInProgressRef = React.useRef(false)
   const menuHandlersRef = React.useRef({
     open: async () => {},
     save: async () => {},
@@ -245,13 +246,20 @@ function App() {
   }, [addRecentFile, addTab])
 
   const handleSaveAsRequest = React.useCallback(async () => {
+    if (saveAsInProgressRef.current) return
+
     const activeTab = getActiveTab()
     if (!activeTab) return
 
-    const newFilePath = await fileOperations.saveAsFile(activeTab.content)
-    if (newFilePath) {
-      useDocumentStore.getState().updateActiveTab?.({ filePath: newFilePath, isModified: false, lastSaved: Date.now() })
-      addRecentFile(newFilePath)
+    saveAsInProgressRef.current = true
+    try {
+      const newFilePath = await fileOperations.saveAsFile(activeTab.content)
+      if (newFilePath) {
+        useDocumentStore.getState().updateActiveTab?.({ filePath: newFilePath, isModified: false, lastSaved: Date.now() })
+        addRecentFile(newFilePath)
+      }
+    } finally {
+      saveAsInProgressRef.current = false
     }
   }, [addRecentFile, getActiveTab])
 
