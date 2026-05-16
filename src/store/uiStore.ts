@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 interface UIState {
-  theme: 'default' | 'white'
+  theme: 'default' | 'dark'
   darkMode: boolean
   viewMode: 'normal' | 'focus' | 'typewriter'
   activeSidebarSection: 'files' | 'tags' | 'search' | 'recent'
@@ -15,9 +15,10 @@ interface UIState {
   isCommandPaletteOpen: boolean
   isGlobalSearchOpen: boolean
   sliderPosition: number
+  insightPanelWidth: number
   isFocusMode: boolean
   isFullscreen: boolean
-  setTheme: (theme: 'default' | 'white') => void
+  setTheme: (theme: 'default' | 'dark') => void
   setDarkMode: (dark: boolean) => void
   setViewMode: (mode: 'normal' | 'focus' | 'typewriter') => void
   setActiveSidebarSection: (section: 'files' | 'tags' | 'search' | 'recent') => void
@@ -33,6 +34,7 @@ interface UIState {
   setGlobalSearchOpen: (open: boolean) => void
   toggleGlobalSearch: () => void
   setSliderPosition: (position: number) => void
+  setInsightPanelWidth: (width: number) => void
   toggleTheme: () => void
   toggleFocusMode: () => void
   setFullscreen: (fullscreen: boolean) => void
@@ -53,10 +55,11 @@ export const useUIStore = create<UIState>((set) => ({
   isCommandPaletteOpen: false,
   isGlobalSearchOpen: false,
   sliderPosition: 50,
+  insightPanelWidth: 360,
   isFocusMode: false,
   isFullscreen: false,
 
-  setTheme: (theme: 'default' | 'white') => set({ theme }),
+  setTheme: (theme: 'default' | 'dark') => set({ theme }),
   setDarkMode: (dark: boolean) => set({ darkMode: dark }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setActiveSidebarSection: (section) => set({ activeSidebarSection: section, showSidebar: true }),
@@ -72,7 +75,8 @@ export const useUIStore = create<UIState>((set) => ({
   setGlobalSearchOpen: (open) => set({ isGlobalSearchOpen: open }),
   toggleGlobalSearch: () => set((state) => ({ isGlobalSearchOpen: !state.isGlobalSearchOpen })),
   setSliderPosition: (position: number) => set({ sliderPosition: position }),
-  toggleTheme: () => set((state) => ({ theme: state.theme === 'default' ? 'white' : 'default' })),
+  setInsightPanelWidth: (width: number) => set({ insightPanelWidth: Math.min(760, Math.max(280, width)) }),
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'default' ? 'dark' : 'default' })),
   toggleFocusMode: () => set((state) => ({ isFocusMode: !state.isFocusMode })),
   setFullscreen: (fullscreen: boolean) => set({ isFullscreen: fullscreen }),
 }))

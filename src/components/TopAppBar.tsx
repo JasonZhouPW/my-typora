@@ -47,8 +47,8 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
         <button className="text-control" onClick={onOpenFile}>Open</button>
         <button className="text-control primary" onClick={onSaveFile}>Save</button>
         <button className="icon-control" onClick={togglePreview} title="Toggle preview">◐</button>
-        <button className="icon-control" onClick={toggleTheme} title="Toggle theme">
-          {theme === 'default' ? '◑' : '●'}
+        <button className="text-control theme-toggle" onClick={toggleTheme} title="Toggle theme">
+          {theme === 'default' ? 'Dark' : 'Light'}
         </button>
         <button className="icon-control" onClick={toggleCommandPalette} title="Command palette">⌘</button>
         <button className="icon-control" onClick={toggleInsightPanel} title="Toggle insight panel">

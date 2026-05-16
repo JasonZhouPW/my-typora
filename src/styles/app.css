@@ -100,6 +100,10 @@ kbd {
   min-width: 104px;
 }
 
+.theme-toggle {
+  min-width: 58px;
+}
+
 .text-control.primary {
   border-color: var(--color-primary);
   background: var(--color-primary);
@@ -204,6 +208,35 @@ kbd {
   background: var(--bg-canvas);
 }
 
+.workspace-preview-resizer {
+  width: 8px;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  background: var(--bg-shell);
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+}
+
+.workspace-preview-resizer:hover,
+.resizing-insight-panel .workspace-preview-resizer {
+  background: var(--color-primary-light);
+}
+
+.workspace-preview-resizer div {
+  width: 2px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--border-dark);
+}
+
+.resizing-insight-panel {
+  cursor: col-resize;
+  user-select: none;
+}
+
 .workspace-center.hidden {
   display: none;
 }
@@ -222,6 +255,17 @@ kbd {
   flex-direction: column;
   border-left: 1px solid var(--border-light);
   background: var(--bg-secondary);
+}
+
+.insight-shell {
+  min-width: 280px;
+  max-width: 760px;
+  min-height: 0;
+  display: flex;
+}
+
+.insight-shell .insight-panel {
+  width: 100%;
 }
 
 .insight-panel.maximized {
@@ -499,4 +543,42 @@ kbd {
 
 .focus-mode .workspace-center {
   height: 100vh;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #15191f;
+  --bg-secondary: #1d232b;
+  --bg-tertiary: #29313b;
+  --bg-elevated: #202731;
+  --bg-shell: #11161c;
+  --bg-canvas: #171c22;
+  --border-light: #303946;
+  --border-medium: #465364;
+  --border-dark: #647286;
+  --text-primary: #eef3f7;
+  --text-secondary: #c5ced8;
+  --text-tertiary: #8895a5;
+  --text-disabled: #566272;
+  --color-primary: #43c2a6;
+  --color-primary-hover: #67d8c0;
+  --color-primary-light: #143a34;
+  --color-secondary: #a58bff;
+  --color-secondary-light: #2d2747;
+}
+
+[data-theme="dark"] .workspace-topbar {
+  background: rgba(21, 25, 31, 0.94);
+}
+
+[data-theme="dark"] .topbar-search,
+[data-theme="dark"] .icon-control,
+[data-theme="dark"] .text-control,
+[data-theme="dark"] kbd {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .cm-editor,
+[data-theme="dark"] .cm-gutters {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
 }

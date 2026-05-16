@@ -117,11 +117,15 @@ function App() {
     showEditor,
     isFocusMode,
     theme,
+    isPreviewMaximized,
+    insightPanelWidth,
     toggleSidebar,
     togglePreview,
     toggleFocusMode,
     toggleTheme,
+    setInsightPanelWidth,
   } = useUIStore()
+  const [isResizingInsightPanel, setIsResizingInsightPanel] = React.useState(false)
 
   // Use refs to store listeners so they can be properly cleaned up
   const listenersRef = React.useRef<{
@@ -150,6 +154,28 @@ function App() {
       saveActiveTabToStack()
     }
   }, [activeTabId])
+
+  React.useEffect(() => {
+    if (!isResizingInsightPanel) return
+
+    const handleMouseMove = (event: MouseEvent) => {
+      setInsightPanelWidth(window.innerWidth - event.clientX)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizingInsightPanel(false)
+    }
+
+    document.body.classList.add('resizing-insight-panel')
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.body.classList.remove('resizing-insight-panel')
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizingInsightPanel, setInsightPanelWidth])
 
   React.useEffect(() => {
     if (!showPreview || !showInsightPanel || isFocusMode) return
@@ -315,7 +341,27 @@ function App() {
             <EditorContainer workspaceMode />
           </div>
         </div>
-        {showInsightPanel && showPreview && !isFocusMode && <InsightPanel />}
+        {showInsightPanel && showPreview && !isFocusMode && (
+          <>
+            {!isPreviewMaximized && (
+              <div
+                className="workspace-preview-resizer"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  setIsResizingInsightPanel(true)
+                }}
+              >
+                <div />
+              </div>
+            )}
+            <div
+              className="insight-shell"
+              style={{ width: isPreviewMaximized ? undefined : `${insightPanelWidth}px` }}
+            >
+              <InsightPanel />
+            </div>
+          </>
+        )}
       </div>
       <CommandPalette commands={commands} />
       <GlobalSearch />
