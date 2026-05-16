@@ -5,7 +5,7 @@ interface UIState {
   darkMode: boolean
   viewMode: 'normal' | 'focus' | 'typewriter'
   activeSidebarSection: 'files' | 'tags' | 'search' | 'recent'
-  activeInsightTab: 'preview' | 'outline' | 'backlinks' | 'export'
+  activeInsightTab: 'preview' | 'export'
   showSidebar: boolean
   showTableOfContents: boolean
   showInsightPanel: boolean
@@ -22,7 +22,7 @@ interface UIState {
   setDarkMode: (dark: boolean) => void
   setViewMode: (mode: 'normal' | 'focus' | 'typewriter') => void
   setActiveSidebarSection: (section: 'files' | 'tags' | 'search' | 'recent') => void
-  setActiveInsightTab: (tab: 'preview' | 'outline' | 'backlinks' | 'export') => void
+  setActiveInsightTab: (tab: 'preview' | 'export') => void
   toggleSidebar: () => void
   toggleTableOfContents: () => void
   toggleInsightPanel: () => void
@@ -70,7 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
   togglePreview: () => set((state) => ({
     showPreview: !state.showPreview,
     showInsightPanel: true,
-    activeInsightTab: state.showPreview ? 'outline' : 'preview',
+    activeInsightTab: state.showPreview ? 'export' : 'preview',
   })),
   toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
   togglePreviewMaximized: () => set((state) => ({ isPreviewMaximized: !state.isPreviewMaximized, activeInsightTab: 'preview' })),

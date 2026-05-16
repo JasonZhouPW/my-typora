@@ -1,7 +1,6 @@
 import React from 'react'
 import mermaid from 'mermaid'
 import { useDocumentStore, useUIStore } from '../store'
-import { extractHeadings, findBacklinks, getDocumentTitle, type DocumentSummary } from '../utils/documentInsights'
 import { markdownTransformer } from '../utils/markdownTransformer'
 
 mermaid.initialize({
@@ -10,24 +9,13 @@ mermaid.initialize({
 })
 
 export default function InsightPanel() {
-  const { tabs, getActiveTab } = useDocumentStore()
+  const { getActiveTab } = useDocumentStore()
   const { activeInsightTab, setActiveInsightTab, showPreview, isPreviewMaximized, togglePreviewMaximized } = useUIStore()
   const activeTab = getActiveTab()
   const [previewScale, setPreviewScale] = React.useState(1)
   const content = activeTab?.content ?? ''
   const previewHtml = markdownTransformer.transform(content)
   const mermaidCode = markdownTransformer.extractMermaidCode(content)
-  const documents: DocumentSummary[] = tabs.map(tab => ({
-    id: tab.id,
-    title: getDocumentTitle(tab.filePath, tab.content),
-    filePath: tab.filePath,
-    content: tab.content,
-  }))
-  const activeDocument = activeTab
-    ? documents.find(document => document.id === activeTab.id)
-    : undefined
-  const headings = extractHeadings(content)
-  const backlinks = activeDocument ? findBacklinks(activeDocument, documents) : []
 
   React.useEffect(() => {
     const renderMermaid = async () => {
@@ -61,8 +49,6 @@ export default function InsightPanel() {
       <div className="insight-tabs">
         {[
           ...(showPreview ? [['preview', 'Preview']] : []),
-          ['outline', 'Outline'],
-          ['backlinks', 'Links'],
           ['export', 'Export'],
         ].map(([tab, label]) => (
           <button
@@ -91,33 +77,6 @@ export default function InsightPanel() {
               style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left' }}
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
-          </div>
-        )}
-
-        {activeInsightTab === 'outline' && (
-          <div className="outline-list">
-            {headings.length === 0 ? (
-              <div className="empty-state">No headings in this document</div>
-            ) : headings.map(heading => (
-              <button className="outline-row" style={{ paddingLeft: `${(heading.level - 1) * 12 + 12}px` }} key={`${heading.line}-${heading.slug}`}>
-                <span>{heading.text}</span>
-                <small>L{heading.line}</small>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {activeInsightTab === 'backlinks' && (
-          <div className="backlink-list">
-            {backlinks.length === 0 ? (
-              <div className="empty-state">No backlinks from open documents</div>
-            ) : backlinks.map(link => (
-              <div className="backlink-row" key={`${link.document.id}-${link.line}`}>
-                <strong>{link.document.title}</strong>
-                <span>{link.match}</span>
-                <small>Line {link.line}</small>
-              </div>
-            ))}
           </div>
         )}
 
