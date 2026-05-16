@@ -18,6 +18,7 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
     toggleTheme,
     theme,
     showSidebar,
+    showPreview,
     showInsightPanel,
   } = useUIStore()
   const activeTab = getActiveTab()
@@ -46,13 +47,15 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
         <button className="text-control" onClick={onNewFile}>New</button>
         <button className="text-control" onClick={onOpenFile}>Open</button>
         <button className="text-control primary" onClick={onSaveFile}>Save</button>
-        <button className="icon-control" onClick={togglePreview} title="Toggle preview">◐</button>
+        <button className={`text-control preview-toggle ${showPreview ? 'active' : ''}`} onClick={togglePreview} title="Toggle preview">
+          {showPreview ? 'Hide Preview' : 'Show Preview'}
+        </button>
         <button className="text-control theme-toggle" onClick={toggleTheme} title="Toggle theme">
           {theme === 'default' ? 'Dark' : 'Light'}
         </button>
         <button className="icon-control" onClick={toggleCommandPalette} title="Command palette">⌘</button>
-        <button className="icon-control" onClick={toggleInsightPanel} title="Toggle insight panel">
-          {showInsightPanel ? '◫' : '◩'}
+        <button className="text-control insight-toggle" onClick={toggleInsightPanel} title="Toggle insight panel">
+          {showInsightPanel ? 'Hide Info' : 'Show Info'}
         </button>
       </div>
     </header>

@@ -11,7 +11,7 @@ mermaid.initialize({
 
 export default function InsightPanel() {
   const { tabs, getActiveTab } = useDocumentStore()
-  const { activeInsightTab, setActiveInsightTab, isPreviewMaximized, togglePreviewMaximized } = useUIStore()
+  const { activeInsightTab, setActiveInsightTab, showPreview, isPreviewMaximized, togglePreviewMaximized } = useUIStore()
   const activeTab = getActiveTab()
   const [previewScale, setPreviewScale] = React.useState(1)
   const content = activeTab?.content ?? ''
@@ -60,7 +60,7 @@ export default function InsightPanel() {
     <aside className={`insight-panel ${isPreviewMaximized ? 'maximized' : ''}`}>
       <div className="insight-tabs">
         {[
-          ['preview', 'Preview'],
+          ...(showPreview ? [['preview', 'Preview']] : []),
           ['outline', 'Outline'],
           ['backlinks', 'Links'],
           ['export', 'Export'],

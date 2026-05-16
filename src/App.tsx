@@ -359,9 +359,9 @@ function App() {
             <EditorContainer workspaceMode />
           </div>
         </div>
-        {showInsightPanel && showPreview && !isFocusMode && (
+        {showInsightPanel && !isFocusMode && (
           <>
-            {!isPreviewMaximized && (
+            {showPreview && !isPreviewMaximized && (
               <div
                 className="workspace-preview-resizer"
                 onMouseDown={(event) => {
@@ -373,8 +373,8 @@ function App() {
               </div>
             )}
             <div
-              className="insight-shell"
-              style={{ width: isPreviewMaximized ? undefined : `${insightPanelWidth}px` }}
+              className={`insight-shell ${!showPreview ? 'compact' : ''}`}
+              style={{ width: isPreviewMaximized ? undefined : `${showPreview ? insightPanelWidth : 360}px` }}
             >
               <InsightPanel />
             </div>

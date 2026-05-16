@@ -104,6 +104,20 @@ kbd {
   min-width: 58px;
 }
 
+.preview-toggle {
+  min-width: 112px;
+}
+
+.preview-toggle.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.insight-toggle {
+  min-width: 86px;
+}
+
 .text-control.primary {
   border-color: var(--color-primary);
   background: var(--color-primary);
@@ -263,6 +277,11 @@ kbd {
   min-height: 0;
   display: flex;
   overflow: hidden;
+}
+
+.insight-shell.compact {
+  min-width: 320px;
+  max-width: 420px;
 }
 
 .insight-shell .insight-panel {
