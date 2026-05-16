@@ -14,7 +14,7 @@
 .workspace-topbar {
   height: var(--header-height);
   display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(240px, 1fr) auto;
+  grid-template-columns: minmax(120px, 240px) minmax(240px, 1fr) auto;
   align-items: center;
   gap: var(--spacing-4);
   padding: 0 var(--spacing-4);
@@ -90,35 +90,34 @@ kbd {
 .icon-control {
   width: 32px;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-control svg,
+.sidebar-reopen svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .text-control {
   padding: 0 var(--spacing-3);
 }
 
-.sidebar-toggle {
-  min-width: 104px;
-}
-
-.theme-toggle {
-  min-width: 58px;
-}
-
-.preview-toggle {
-  min-width: 112px;
-}
-
-.preview-toggle.active {
+.icon-control.active {
   border-color: var(--color-primary);
   color: var(--color-primary);
   background: var(--color-primary-light);
 }
 
-.insight-toggle {
-  min-width: 86px;
-}
-
-.text-control.primary {
+.text-control.primary,
+.icon-control.primary {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: #fff;
@@ -159,15 +158,16 @@ kbd {
 .sidebar-reopen {
   width: 40px;
   min-height: 0;
-  padding: var(--spacing-3) 0;
+  padding: 0;
   border: 0;
   border-right: 1px solid var(--border-light);
   border-radius: 0;
   background: var(--bg-secondary);
   color: var(--text-secondary);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  letter-spacing: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--spacing-4);
 }
 
 .sidebar-reopen:hover {

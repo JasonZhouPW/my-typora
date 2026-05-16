@@ -1,6 +1,47 @@
 import { useDocumentStore, useUIStore } from '../store'
 import { getDocumentTitle } from '../utils/documentInsights'
 
+function Icon({ name }: { name: 'new' | 'open' | 'save' | 'preview' | 'theme' }) {
+  if (name === 'new') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    )
+  }
+  if (name === 'open') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 7h6l2 3h10v9H3z" />
+        <path d="M3 7v12" />
+      </svg>
+    )
+  }
+  if (name === 'save') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 4h12l2 2v14H5z" />
+        <path d="M8 4v6h8V4" />
+        <path d="M8 17h8" />
+      </svg>
+    )
+  }
+  if (name === 'preview') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 5h18v14H3z" />
+        <path d="M12 5v14" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 4a8 8 0 1 0 0 16z" />
+      <path d="M12 4a8 8 0 0 1 0 16" />
+    </svg>
+  )
+}
+
 interface TopAppBarProps {
   onNewFile: () => void
   onOpenFile: () => void
@@ -10,13 +51,11 @@ interface TopAppBarProps {
 export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppBarProps) {
   const { getActiveTab } = useDocumentStore()
   const {
-    toggleSidebar,
     toggleCommandPalette,
     toggleGlobalSearch,
     togglePreview,
     toggleTheme,
     theme,
-    showSidebar,
     showPreview,
   } = useUIStore()
   const activeTab = getActiveTab()
@@ -26,9 +65,6 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
   return (
     <header className="workspace-topbar">
       <div className="topbar-brand">
-        <button className="text-control sidebar-toggle" onClick={toggleSidebar} title="Toggle sidebar">
-          {showSidebar ? 'Hide Sidebar' : 'Show Sidebar'}
-        </button>
         <div>
           <div className="topbar-title">Typra</div>
           <div className="topbar-subtitle">{title}</div>
@@ -42,14 +78,20 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
 
       <div className="topbar-actions">
         <span className={`save-state ${activeTab?.isModified ? 'dirty' : ''}`}>{saveState}</span>
-        <button className="text-control" onClick={onNewFile}>New</button>
-        <button className="text-control" onClick={onOpenFile}>Open</button>
-        <button className="text-control primary" onClick={onSaveFile}>Save</button>
-        <button className={`text-control preview-toggle ${showPreview ? 'active' : ''}`} onClick={togglePreview} title="Toggle preview">
-          {showPreview ? 'Hide Preview' : 'Show Preview'}
+        <button className="icon-control" onClick={onNewFile} title="New document" aria-label="New document">
+          <Icon name="new" />
         </button>
-        <button className="text-control theme-toggle" onClick={toggleTheme} title="Toggle theme">
-          {theme === 'default' ? 'Dark' : 'Light'}
+        <button className="icon-control" onClick={onOpenFile} title="Open file" aria-label="Open file">
+          <Icon name="open" />
+        </button>
+        <button className="icon-control primary" onClick={onSaveFile} title="Save file" aria-label="Save file">
+          <Icon name="save" />
+        </button>
+        <button className={`icon-control ${showPreview ? 'active' : ''}`} onClick={togglePreview} title={showPreview ? 'Hide preview' : 'Show preview'} aria-label={showPreview ? 'Hide preview' : 'Show preview'}>
+          <Icon name="preview" />
+        </button>
+        <button className="icon-control" onClick={toggleTheme} title={theme === 'default' ? 'Switch to dark theme' : 'Switch to light theme'} aria-label="Toggle theme">
+          <Icon name="theme" />
         </button>
         <button className="icon-control" onClick={toggleCommandPalette} title="Command palette">⌘</button>
       </div>

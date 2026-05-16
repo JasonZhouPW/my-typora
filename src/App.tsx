@@ -366,8 +366,10 @@ function App() {
       <div className="workspace-main">
         {showSidebar && !isFocusMode && <WorkspaceSidebar />}
         {!showSidebar && !isFocusMode && (
-          <button className="sidebar-reopen" onClick={toggleSidebar}>
-            Show Sidebar
+          <button className="sidebar-reopen" onClick={toggleSidebar} title="Show sidebar" aria-label="Show sidebar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5h16M4 12h16M4 19h16" />
+            </svg>
           </button>
         )}
         <div className={`workspace-center ${!showEditor ? 'hidden' : ''}`}>
