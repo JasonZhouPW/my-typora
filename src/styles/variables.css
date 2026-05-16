@@ -6,9 +6,11 @@
   /* Color Palette - Inspired by modern UI design */
 
   /* Primary Colors */
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-light: #eef2ff;
+  --color-primary: #16846f;
+  --color-primary-hover: #0f6f5d;
+  --color-primary-light: #e5f4f0;
+  --color-secondary: #7257b8;
+  --color-secondary-light: #f0ecfb;
 
   /* Neutral Grays */
   --gray-50: #f9fafb;
@@ -30,9 +32,11 @@
 
   /* Background Colors */
   --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
+  --bg-secondary: #f7f8fa;
+  --bg-tertiary: #eef1f4;
   --bg-elevated: #ffffff;
+  --bg-shell: #edf1f4;
+  --bg-canvas: #ffffff;
 
   /* Border Colors */
   --border-light: #e5e7eb;
@@ -108,25 +112,12 @@
   --z-tooltip: 400;
 
   /* Layout */
-  --sidebar-width: 260px;
-  --header-height: 56px;
+  --sidebar-width: 292px;
+  --insight-width: 360px;
+  --header-height: 58px;
 
   /* Markdown Preview */
   --preview-max-width: 720px;
-}
-
-/* Dark Mode Colors (for future use) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --bg-tertiary: #374151;
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-tertiary: #9ca3af;
-    --border-light: #374151;
-    --border-medium: #4b5563;
-  }
 }
 
 /* White Theme */

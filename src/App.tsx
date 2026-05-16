@@ -1,8 +1,11 @@
 import React from 'react'
 import EditorContainer from './components/EditorContainer'
-import FileExplorer from './components/FileExplorer'
 import TabBar from './components/TabBar'
-import RecentFiles from './components/RecentFiles'
+import TopAppBar from './components/TopAppBar'
+import WorkspaceSidebar from './components/WorkspaceSidebar'
+import InsightPanel from './components/InsightPanel'
+import CommandPalette from './components/CommandPalette'
+import GlobalSearch from './components/GlobalSearch'
 import { useDocumentStore, useUIStore } from './store'
 import { fileOperations } from './utils/fileOperations'
 import './styles/global.css'
@@ -107,7 +110,17 @@ Typra 是一款使用 Electron、React 和 TypeScript 构建的跨平台 Markdow
 
 function App() {
   const { tabs, activeTabId, addTab, switchTab, getActiveTab, saveActiveTabToStack, addRecentFile } = useDocumentStore()
-  const { toggleSidebar, showSidebar, isFocusMode, theme } = useUIStore()
+  const {
+    showSidebar,
+    showInsightPanel,
+    showPreview,
+    showEditor,
+    isFocusMode,
+    theme,
+    togglePreview,
+    toggleFocusMode,
+    toggleTheme,
+  } = useUIStore()
 
   // Use refs to store listeners so they can be properly cleaned up
   const listenersRef = React.useRef<{
@@ -137,55 +150,63 @@ function App() {
     }
   }, [activeTabId])
 
+  const handleNewTab = React.useCallback(() => {
+    addTab({ content: '', filePath: null })
+  }, [addTab])
+
+  const handleOpenRequest = React.useCallback(async () => {
+    const result = await fileOperations.openFile()
+    if (result) {
+      addTab({ content: result.content, filePath: result.path })
+      addRecentFile(result.path)
+    }
+  }, [addRecentFile, addTab])
+
+  const handleSaveAsRequest = React.useCallback(async () => {
+    const activeTab = getActiveTab()
+    if (!activeTab) return
+
+    const newFilePath = await fileOperations.saveAsFile(activeTab.content)
+    if (newFilePath) {
+      useDocumentStore.getState().updateActiveTab?.({ filePath: newFilePath, isModified: false, lastSaved: Date.now() })
+      addRecentFile(newFilePath)
+    }
+  }, [addRecentFile, getActiveTab])
+
+  const handleSaveRequest = React.useCallback(async () => {
+    const activeTab = getActiveTab()
+    if (activeTab?.filePath) {
+      const saved = await fileOperations.saveFile(activeTab.filePath, activeTab.content)
+      if (saved) {
+        useDocumentStore.getState().updateActiveTab?.({ isModified: false, lastSaved: Date.now() })
+        addRecentFile(activeTab.filePath)
+      }
+    } else {
+      await handleSaveAsRequest()
+    }
+  }, [addRecentFile, getActiveTab, handleSaveAsRequest])
+
+  const handleOpenFileRequest = React.useCallback(async (file: string) => {
+    try {
+      const result = await fileOperations.readFile(file)
+      if (result) {
+        const existingTab = useDocumentStore.getState().tabs.find(t => t.filePath === result.path)
+        if (existingTab) {
+          switchTab(existingTab.id)
+        } else {
+          addTab({ content: result.content, filePath: result.path })
+        }
+        addRecentFile(result.path)
+      }
+    } catch (error) {
+      console.error('Failed to open recent file:', error)
+    }
+  }, [addRecentFile, addTab, switchTab])
+
   // Initialize listeners only once on mount
   React.useEffect(() => {
     const handleNew = () => {
       addTab({ content: '', filePath: null })
-    }
-
-    const handleOpenRequest = async () => {
-      const result = await fileOperations.openFile()
-      if (result) {
-        addTab({ content: result.content, filePath: result.path })
-        addRecentFile(result.path)
-      }
-    }
-
-    const handleSaveRequest = async () => {
-      const activeTab = getActiveTab()
-      if (activeTab?.filePath) {
-        await fileOperations.saveFile(activeTab.filePath, activeTab.content)
-      } else {
-        await handleSaveAsRequest()
-      }
-    }
-
-    const handleSaveAsRequest = async () => {
-      const activeTab = getActiveTab()
-      if (!activeTab) return
-
-      const newFilePath = await fileOperations.saveAsFile(activeTab.content)
-      if (newFilePath) {
-        useDocumentStore.getState().updateActiveTab?.({ filePath: newFilePath })
-      }
-    }
-
-    const handleOpenFileRequest = async (file: string) => {
-      try {
-        const result = await fileOperations.readFile(file)
-        if (result) {
-          // Check if file is already open in a tab
-          const existingTab = tabs.find(t => t.filePath === result.path)
-          if (existingTab) {
-            switchTab(existingTab.id)
-          } else {
-            addTab({ content: result.content, filePath: result.path })
-          }
-          addRecentFile(result.path)
-        }
-      } catch (error) {
-        console.error('Failed to open recent file:', error)
-      }
     }
 
     // Store listeners in ref for cleanup
@@ -222,37 +243,38 @@ function App() {
         window.electronAPI.removeListener('file:open-file', listenersRef.current.openFileListener)
       }
     }
-  }, [activeTabId]) // Re-bind when activeTab changes for save operations
+  }, [activeTabId, addTab, handleOpenFileRequest, handleOpenRequest, handleSaveAsRequest, handleSaveRequest]) // Re-bind when activeTab changes for save operations
 
-  const handleNewTab = () => {
-    addTab({ content: '', filePath: null })
-  }
+  const commands = [
+    { id: 'new', label: 'New document', hint: 'Create an untitled tab', run: handleNewTab },
+    { id: 'open', label: 'Open file', hint: 'Choose a Markdown file', run: handleOpenRequest },
+    { id: 'save', label: 'Save file', hint: 'Persist the active tab', run: handleSaveRequest },
+    { id: 'preview', label: 'Toggle preview', hint: 'Show or hide preview panel', run: togglePreview },
+    { id: 'focus', label: 'Focus mode', hint: 'Hide workspace chrome', run: toggleFocusMode },
+    { id: 'theme', label: 'Toggle theme', hint: 'Switch visual theme', run: toggleTheme },
+  ]
 
   return (
     <div className={`app-container ${isFocusMode ? 'focus-mode' : ''}`}>
-      <header className="app-header">
-        <h1 className="app-title">
-          <span className="app-title-icon">📝</span>
-          Typra
-        </h1>
-        <div className="header-actions">
-          <button onClick={toggleSidebar}>
-            {showSidebar ? '📂 隐藏' : '📂 显示'} 侧边栏
-          </button>
-        </div>
-      </header>
-      <TabBar onNewTab={handleNewTab} />
-      <div className="app-main">
-        {showSidebar && (
-          <div className="sidebar">
-            <RecentFiles />
-            <FileExplorer />
+      {!isFocusMode && (
+        <TopAppBar
+          onNewFile={handleNewTab}
+          onOpenFile={handleOpenRequest}
+          onSaveFile={handleSaveRequest}
+        />
+      )}
+      <div className="workspace-main">
+        {showSidebar && !isFocusMode && <WorkspaceSidebar />}
+        <div className={`workspace-center ${!showEditor ? 'hidden' : ''}`}>
+          {!isFocusMode && <TabBar onNewTab={handleNewTab} />}
+          <div className="editor-surface">
+            <EditorContainer workspaceMode />
           </div>
-        )}
-        <div className="content-area">
-          <EditorContainer />
         </div>
+        {showInsightPanel && showPreview && !isFocusMode && <InsightPanel />}
       </div>
+      <CommandPalette commands={commands} />
+      <GlobalSearch />
     </div>
   )
 }

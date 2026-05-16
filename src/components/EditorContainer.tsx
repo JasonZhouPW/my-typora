@@ -11,7 +11,11 @@ mermaid.initialize({
   theme: 'default',
 })
 
-export default function EditorContainer() {
+interface EditorContainerProps {
+  workspaceMode?: boolean
+}
+
+export default function EditorContainer({ workspaceMode = false }: EditorContainerProps) {
   const { setActiveTabContent, saveActiveTabToStack, getActiveTab } = useDocumentStore()
   const { setSelection, setCurrentBlockType } = useEditorStore()
   const { showPreview, togglePreview, showEditor, toggleEditor, sliderPosition, setSliderPosition, isFocusMode, toggleFocusMode, isFullscreen, setFullscreen, theme, toggleTheme } = useUIStore()
@@ -193,6 +197,23 @@ export default function EditorContainer() {
     } else {
       document.exitFullscreen()
     }
+  }
+
+  if (workspaceMode) {
+    return (
+      <div className="editor-container editor-container-workspace">
+        <div className="editor-layout single-editor">
+          <div className="editor-panel">
+            <CodeMirrorEditor
+              viewRef={editorViewRef}
+              content={content}
+              onChange={handleChange}
+              onSelectionChange={handleSelectionChange}
+            />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
