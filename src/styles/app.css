@@ -127,7 +127,7 @@ kbd {
 .workspace-main {
   flex: 1;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 1px;
   min-height: 0;
   overflow: hidden;
@@ -262,6 +262,7 @@ kbd {
   max-width: 760px;
   min-height: 0;
   display: flex;
+  overflow: hidden;
 }
 
 .insight-shell .insight-panel {
