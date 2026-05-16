@@ -27,8 +27,8 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
   return (
     <header className="workspace-topbar">
       <div className="topbar-brand">
-        <button className="icon-control" onClick={toggleSidebar} title="Toggle sidebar">
-          {showSidebar ? '◧' : '◨'}
+        <button className="text-control sidebar-toggle" onClick={toggleSidebar} title="Toggle sidebar">
+          {showSidebar ? 'Hide Sidebar' : 'Show Sidebar'}
         </button>
         <div>
           <div className="topbar-title">Typra</div>

@@ -117,6 +117,7 @@ function App() {
     showEditor,
     isFocusMode,
     theme,
+    toggleSidebar,
     togglePreview,
     toggleFocusMode,
     toggleTheme,
@@ -149,6 +150,44 @@ function App() {
       saveActiveTabToStack()
     }
   }, [activeTabId])
+
+  React.useEffect(() => {
+    if (!showPreview || !showInsightPanel || isFocusMode) return
+
+    const editorScroller = document.querySelector('.editor-container-workspace .cm-scroller') as HTMLElement | null
+    const previewScroller = document.querySelector('.insight-preview') as HTMLElement | null
+    if (!editorScroller || !previewScroller) return
+
+    let syncingFrom: 'editor' | 'preview' | null = null
+    let frame = 0
+
+    const syncScroll = (source: HTMLElement, target: HTMLElement, sourceName: 'editor' | 'preview') => {
+      if (syncingFrom && syncingFrom !== sourceName) return
+
+      syncingFrom = sourceName
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const sourceMax = Math.max(1, source.scrollHeight - source.clientHeight)
+        const targetMax = Math.max(0, target.scrollHeight - target.clientHeight)
+        target.scrollTop = (source.scrollTop / sourceMax) * targetMax
+        window.setTimeout(() => {
+          syncingFrom = null
+        }, 80)
+      })
+    }
+
+    const handleEditorScroll = () => syncScroll(editorScroller, previewScroller, 'editor')
+    const handlePreviewScroll = () => syncScroll(previewScroller, editorScroller, 'preview')
+
+    editorScroller.addEventListener('scroll', handleEditorScroll, { passive: true })
+    previewScroller.addEventListener('scroll', handlePreviewScroll, { passive: true })
+
+    return () => {
+      cancelAnimationFrame(frame)
+      editorScroller.removeEventListener('scroll', handleEditorScroll)
+      previewScroller.removeEventListener('scroll', handlePreviewScroll)
+    }
+  }, [activeTabId, showPreview, showInsightPanel, isFocusMode])
 
   const handleNewTab = React.useCallback(() => {
     addTab({ content: '', filePath: null })
@@ -265,6 +304,11 @@ function App() {
       )}
       <div className="workspace-main">
         {showSidebar && !isFocusMode && <WorkspaceSidebar />}
+        {!showSidebar && !isFocusMode && (
+          <button className="sidebar-reopen" onClick={toggleSidebar}>
+            Show Sidebar
+          </button>
+        )}
         <div className={`workspace-center ${!showEditor ? 'hidden' : ''}`}>
           {!isFocusMode && <TabBar onNewTab={handleNewTab} />}
           <div className="editor-surface">

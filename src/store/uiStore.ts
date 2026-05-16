@@ -11,6 +11,7 @@ interface UIState {
   showInsightPanel: boolean
   showPreview: boolean
   showEditor: boolean
+  isPreviewMaximized: boolean
   isCommandPaletteOpen: boolean
   isGlobalSearchOpen: boolean
   sliderPosition: number
@@ -26,6 +27,7 @@ interface UIState {
   toggleInsightPanel: () => void
   togglePreview: () => void
   toggleEditor: () => void
+  togglePreviewMaximized: () => void
   setCommandPaletteOpen: (open: boolean) => void
   toggleCommandPalette: () => void
   setGlobalSearchOpen: (open: boolean) => void
@@ -47,6 +49,7 @@ export const useUIStore = create<UIState>((set) => ({
   showInsightPanel: true,
   showPreview: true,
   showEditor: true,
+  isPreviewMaximized: false,
   isCommandPaletteOpen: false,
   isGlobalSearchOpen: false,
   sliderPosition: 50,
@@ -63,6 +66,7 @@ export const useUIStore = create<UIState>((set) => ({
   toggleInsightPanel: () => set((state) => ({ showInsightPanel: !state.showInsightPanel })),
   togglePreview: () => set((state) => ({ showPreview: !state.showPreview })),
   toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
+  togglePreviewMaximized: () => set((state) => ({ isPreviewMaximized: !state.isPreviewMaximized, activeInsightTab: 'preview' })),
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
   toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
   setGlobalSearchOpen: (open) => set({ isGlobalSearchOpen: open }),

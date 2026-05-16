@@ -11,7 +11,7 @@ mermaid.initialize({
 
 export default function InsightPanel() {
   const { tabs, getActiveTab } = useDocumentStore()
-  const { activeInsightTab, setActiveInsightTab } = useUIStore()
+  const { activeInsightTab, setActiveInsightTab, isPreviewMaximized, togglePreviewMaximized } = useUIStore()
   const activeTab = getActiveTab()
   const [previewScale, setPreviewScale] = React.useState(1)
   const content = activeTab?.content ?? ''
@@ -57,7 +57,7 @@ export default function InsightPanel() {
   }, [activeInsightTab, activeTab?.id, mermaidCode])
 
   return (
-    <aside className="insight-panel">
+    <aside className={`insight-panel ${isPreviewMaximized ? 'maximized' : ''}`}>
       <div className="insight-tabs">
         {[
           ['preview', 'Preview'],
@@ -82,6 +82,9 @@ export default function InsightPanel() {
               <button onClick={() => setPreviewScale(scale => Math.max(0.5, scale - 0.1))}>−</button>
               <span>{Math.round(previewScale * 100)}%</span>
               <button onClick={() => setPreviewScale(scale => Math.min(2, scale + 0.1))}>+</button>
+              <button className="preview-fullscreen-button" onClick={togglePreviewMaximized}>
+                {isPreviewMaximized ? 'Exit Fullscreen' : 'Fullscreen'}
+              </button>
             </div>
             <div
               className="markdown-preview"
