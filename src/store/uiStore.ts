@@ -70,7 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
   togglePreview: () => set((state) => ({
     showPreview: !state.showPreview,
     showInsightPanel: true,
-    activeInsightTab: state.showPreview ? state.activeInsightTab : 'preview',
+    activeInsightTab: state.showPreview ? 'outline' : 'preview',
   })),
   toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
   togglePreviewMaximized: () => set((state) => ({ isPreviewMaximized: !state.isPreviewMaximized, activeInsightTab: 'preview' })),

@@ -76,7 +76,7 @@ export default function InsightPanel() {
       </div>
 
       <div className="insight-body">
-        {activeInsightTab === 'preview' && (
+        {showPreview && activeInsightTab === 'preview' && (
           <div className="insight-preview">
             <div className="preview-tools">
               <button onClick={() => setPreviewScale(scale => Math.max(0.5, scale - 0.1))}>−</button>
