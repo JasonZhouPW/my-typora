@@ -117,6 +117,7 @@ function App() {
     showEditor,
     isFocusMode,
     theme,
+    activeInsightTab,
     isPreviewMaximized,
     insightPanelWidth,
     toggleSidebar,
@@ -178,14 +179,12 @@ function App() {
   }, [isResizingInsightPanel, setInsightPanelWidth])
 
   React.useEffect(() => {
-    if (!showPreview || !showInsightPanel || isFocusMode) return
-
-    const editorScroller = document.querySelector('.editor-container-workspace .cm-scroller') as HTMLElement | null
-    const previewScroller = document.querySelector('.insight-preview') as HTMLElement | null
-    if (!editorScroller || !previewScroller) return
+    if (!showPreview || !showInsightPanel || isFocusMode || activeInsightTab !== 'preview') return
 
     let syncingFrom: 'editor' | 'preview' | null = null
     let frame = 0
+    let retryFrame = 0
+    let cleanupListeners: (() => void) | null = null
 
     const syncScroll = (source: HTMLElement, target: HTMLElement, sourceName: 'editor' | 'preview') => {
       if (syncingFrom && syncingFrom !== sourceName) return
@@ -202,18 +201,37 @@ function App() {
       })
     }
 
-    const handleEditorScroll = () => syncScroll(editorScroller, previewScroller, 'editor')
-    const handlePreviewScroll = () => syncScroll(previewScroller, editorScroller, 'preview')
+    const bindScrollSync = (attempt = 0) => {
+      const editorScroller = document.querySelector('.editor-container-workspace .cm-scroller') as HTMLElement | null
+      const previewScroller = document.querySelector('.insight-panel .insight-body') as HTMLElement | null
 
-    editorScroller.addEventListener('scroll', handleEditorScroll, { passive: true })
-    previewScroller.addEventListener('scroll', handlePreviewScroll, { passive: true })
+      if (!editorScroller || !previewScroller) {
+        if (attempt < 20) {
+          retryFrame = requestAnimationFrame(() => bindScrollSync(attempt + 1))
+        }
+        return
+      }
+
+      const handleEditorScroll = () => syncScroll(editorScroller, previewScroller, 'editor')
+      const handlePreviewScroll = () => syncScroll(previewScroller, editorScroller, 'preview')
+
+      editorScroller.addEventListener('scroll', handleEditorScroll, { passive: true })
+      previewScroller.addEventListener('scroll', handlePreviewScroll, { passive: true })
+
+      cleanupListeners = () => {
+        editorScroller.removeEventListener('scroll', handleEditorScroll)
+        previewScroller.removeEventListener('scroll', handlePreviewScroll)
+      }
+    }
+
+    bindScrollSync()
 
     return () => {
       cancelAnimationFrame(frame)
-      editorScroller.removeEventListener('scroll', handleEditorScroll)
-      previewScroller.removeEventListener('scroll', handlePreviewScroll)
+      cancelAnimationFrame(retryFrame)
+      cleanupListeners?.()
     }
-  }, [activeTabId, showPreview, showInsightPanel, isFocusMode])
+  }, [activeTabId, activeInsightTab, showPreview, showInsightPanel, isFocusMode])
 
   const handleNewTab = React.useCallback(() => {
     addTab({ content: '', filePath: null })
