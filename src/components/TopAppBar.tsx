@@ -1,7 +1,7 @@
 import { useDocumentStore, useUIStore } from '../store'
 import { getDocumentTitle } from '../utils/documentInsights'
 
-function Icon({ name }: { name: 'new' | 'open' | 'save' | 'preview' | 'theme' }) {
+function Icon({ name }: { name: 'new' | 'open' | 'save' | 'preview' | 'editor' | 'theme' }) {
   if (name === 'new') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -34,6 +34,16 @@ function Icon({ name }: { name: 'new' | 'open' | 'save' | 'preview' | 'theme' })
       </svg>
     )
   }
+  if (name === 'editor') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5h16v14H4z" />
+        <path d="M8 9h8" />
+        <path d="M8 13h6" />
+        <path d="M8 17h4" />
+      </svg>
+    )
+  }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 4a8 8 0 1 0 0 16z" />
@@ -53,9 +63,11 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
   const {
     toggleCommandPalette,
     toggleGlobalSearch,
+    toggleEditor,
     togglePreview,
     toggleTheme,
     theme,
+    showEditor,
     showPreview,
   } = useUIStore()
   const activeTab = getActiveTab()
@@ -89,6 +101,9 @@ export default function TopAppBar({ onNewFile, onOpenFile, onSaveFile }: TopAppB
         </button>
         <button className={`icon-control ${showPreview ? 'active' : ''}`} onClick={togglePreview} title={showPreview ? 'Hide preview' : 'Show preview'} aria-label={showPreview ? 'Hide preview' : 'Show preview'}>
           <Icon name="preview" />
+        </button>
+        <button className={`icon-control ${showEditor ? 'active' : ''}`} onClick={toggleEditor} title={showEditor ? 'Hide editor' : 'Show editor'} aria-label={showEditor ? 'Hide editor' : 'Show editor'}>
+          <Icon name="editor" />
         </button>
         <button className="icon-control" onClick={toggleTheme} title={theme === 'default' ? 'Switch to dark theme' : 'Switch to light theme'} aria-label="Toggle theme">
           <Icon name="theme" />

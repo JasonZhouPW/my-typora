@@ -34,4 +34,12 @@ export const fileOperations = {
   async getStatsWithTimes(dirPath?: string): Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean; mtime: number; birthtime: number }>> {
     return await window.electronAPI.file.getStats(dirPath)
   },
+
+  async exportPdf(payload: { markdown: string; html: string; sourceFilePath?: string | null }): Promise<{ success: boolean; filePath?: string; error?: string }> {
+    return await window.electronAPI.export.pdf(payload)
+  },
+
+  async exportDocx(payload: { markdown: string; html: string; sourceFilePath?: string | null }): Promise<{ success: boolean; filePath?: string; error?: string }> {
+    return await window.electronAPI.export.docx(payload)
+  },
 }

@@ -97,8 +97,24 @@ function updateMenu() {
               },
             },
             { type: 'separator' },
-            { label: 'Export PDF', enabled: false },
-            { label: 'Export DOCX', enabled: false },
+            {
+              label: 'Export PDF',
+              click: () => {
+                const focusedWindow = BrowserWindow.getFocusedWindow()
+                if (focusedWindow) {
+                  focusedWindow.webContents.send('export:pdf-request')
+                }
+              },
+            },
+            {
+              label: 'Export DOCX',
+              click: () => {
+                const focusedWindow = BrowserWindow.getFocusedWindow()
+                if (focusedWindow) {
+                  focusedWindow.webContents.send('export:docx-request')
+                }
+              },
+            },
           ],
         },
         { type: 'separator' },

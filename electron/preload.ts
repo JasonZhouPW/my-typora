@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     rename: (oldPath: string, newName: string) => ipcRenderer.invoke('file:rename', oldPath, newName),
     delete: (itemPath: string, isDirectory: boolean) => ipcRenderer.invoke('file:delete', itemPath, isDirectory).then(res => res as { success: boolean; error?: string }),
     getStats: (dirPath?: string) => ipcRenderer.invoke('file:get-stats', dirPath),
+    consumeOpenFiles: () => ipcRenderer.invoke('file:consume-open-files'),
+  },
+  export: {
+    pdf: (payload: { markdown: string; html: string; sourceFilePath?: string | null }) => ipcRenderer.invoke('export:pdf', payload),
+    docx: (payload: { markdown: string; html: string; sourceFilePath?: string | null }) => ipcRenderer.invoke('export:docx', payload),
   },
   on: (channel: string, listener: (...args: any[]) => void) => {
     ipcRenderer.on(channel, listener)
@@ -33,6 +38,11 @@ declare global {
         rename: (oldPath: string, newName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>
         delete: (itemPath: string, isDirectory: boolean) => Promise<{ success: boolean; error?: string }>
         getStats: (dirPath?: string) => Promise<Array<{ name: string; path: string; type: 'folder' | 'file'; isDirectory: boolean; mtime: number; birthtime: number }>>
+        consumeOpenFiles: () => Promise<string[]>
+      }
+      export: {
+        pdf: (payload: { markdown: string; html: string; sourceFilePath?: string | null }) => Promise<{ success: boolean; filePath?: string; error?: string }>
+        docx: (payload: { markdown: string; html: string; sourceFilePath?: string | null }) => Promise<{ success: boolean; filePath?: string; error?: string }>
       }
       on: (channel: string, listener: (...args: any[]) => void) => void
       removeListener: (channel: string, listener: (...args: any[]) => void) => void

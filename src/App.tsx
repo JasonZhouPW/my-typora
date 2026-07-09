@@ -109,6 +109,23 @@ graph LR
 Typra 是一款使用 Electron、React 和 TypeScript 构建的跨平台 Markdown 编辑器。
 `
 
+const SUPPORTED_DROP_FILE_EXTENSIONS = [
+  '.md',
+  '.markdown',
+  '.mdown',
+  '.mkd',
+  '.mkdn',
+  '.mdwn',
+  '.mdtxt',
+  '.mdtext',
+  '.txt',
+]
+
+function isSupportedDroppedFile(filePath: string): boolean {
+  const lowerPath = filePath.toLowerCase()
+  return SUPPORTED_DROP_FILE_EXTENSIONS.some(extension => lowerPath.endsWith(extension))
+}
+
 function App() {
   const { tabs, activeTabId, addTab, switchTab, getActiveTab, saveActiveTabToStack, addRecentFile } = useDocumentStore()
   const {
@@ -121,12 +138,15 @@ function App() {
     isPreviewMaximized,
     insightPanelWidth,
     toggleSidebar,
+    toggleEditor,
     togglePreview,
     toggleFocusMode,
     toggleTheme,
     setInsightPanelWidth,
   } = useUIStore()
   const [isResizingInsightPanel, setIsResizingInsightPanel] = React.useState(false)
+  const [isDraggingFile, setIsDraggingFile] = React.useState(false)
+  const dragDepthRef = React.useRef(0)
   const saveAsInProgressRef = React.useRef(false)
   const menuHandlersRef = React.useRef({
     open: async () => {},
@@ -135,6 +155,8 @@ function App() {
     openFile: async (_filePath: string) => {},
     copyMarkdown: async () => {},
     copyHtml: async () => {},
+    exportPdf: async () => {},
+    exportDocx: async () => {},
   })
 
   // Initialize with a default tab on mount
@@ -179,7 +201,7 @@ function App() {
   }, [isResizingInsightPanel, setInsightPanelWidth])
 
   React.useEffect(() => {
-    if (!showPreview || !showInsightPanel || isFocusMode) return
+    if (!showPreview || !showInsightPanel || !showEditor || isPreviewMaximized || isFocusMode) return
 
     let syncingFrom: 'editor' | 'preview' | null = null
     let frame = 0
@@ -231,7 +253,7 @@ function App() {
       cancelAnimationFrame(retryFrame)
       cleanupListeners?.()
     }
-  }, [activeTabId, showPreview, showInsightPanel, isFocusMode])
+  }, [activeTabId, showEditor, showPreview, showInsightPanel, isFocusMode, isPreviewMaximized])
 
   const handleNewTab = React.useCallback(() => {
     addTab({ content: '', filePath: null })
@@ -293,6 +315,62 @@ function App() {
     }
   }, [addRecentFile, addTab, switchTab])
 
+  React.useEffect(() => {
+    const getDroppedFilePaths = (files: FileList): string[] => {
+      return Array.from(files)
+        .map(file => (file as File & { path?: string }).path)
+        .filter((filePath): filePath is string => Boolean(filePath && isSupportedDroppedFile(filePath)))
+    }
+
+    const handleDragEnter = (event: DragEvent) => {
+      event.preventDefault()
+      dragDepthRef.current += 1
+      if (event.dataTransfer?.types.includes('Files')) {
+        setIsDraggingFile(true)
+      }
+    }
+
+    const handleDragOver = (event: DragEvent) => {
+      event.preventDefault()
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'copy'
+      }
+    }
+
+    const handleDragLeave = (event: DragEvent) => {
+      event.preventDefault()
+      dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+      if (dragDepthRef.current === 0) {
+        setIsDraggingFile(false)
+      }
+    }
+
+    const handleDrop = (event: DragEvent) => {
+      event.preventDefault()
+      dragDepthRef.current = 0
+      setIsDraggingFile(false)
+
+      const filePaths = event.dataTransfer?.files ? getDroppedFilePaths(event.dataTransfer.files) : []
+      void (async () => {
+        for (const filePath of filePaths) {
+          await handleOpenFileRequest(filePath)
+        }
+      })()
+    }
+
+    window.addEventListener('dragenter', handleDragEnter)
+    window.addEventListener('dragover', handleDragOver)
+    window.addEventListener('dragleave', handleDragLeave)
+    window.addEventListener('drop', handleDrop)
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter)
+      window.removeEventListener('dragover', handleDragOver)
+      window.removeEventListener('dragleave', handleDragLeave)
+      window.removeEventListener('drop', handleDrop)
+    }
+  }, [handleOpenFileRequest])
+
   const handleCopyMarkdownExport = React.useCallback(async () => {
     const activeTab = getActiveTab()
     if (!activeTab) return
@@ -305,6 +383,37 @@ function App() {
     await navigator.clipboard?.writeText(markdownTransformer.transform(activeTab.content))
   }, [getActiveTab])
 
+  const buildExportPayload = React.useCallback(() => {
+    const activeTab = getActiveTab()
+    if (!activeTab) return null
+
+    return {
+      markdown: activeTab.content,
+      html: markdownTransformer.transformForExport(activeTab.content),
+      sourceFilePath: activeTab.filePath,
+    }
+  }, [getActiveTab])
+
+  const handlePdfExport = React.useCallback(async () => {
+    const payload = buildExportPayload()
+    if (!payload) return
+
+    const result = await fileOperations.exportPdf(payload)
+    if (!result.success && result.error) {
+      console.error('PDF export failed:', result.error)
+    }
+  }, [buildExportPayload])
+
+  const handleDocxExport = React.useCallback(async () => {
+    const payload = buildExportPayload()
+    if (!payload) return
+
+    const result = await fileOperations.exportDocx(payload)
+    if (!result.success && result.error) {
+      console.error('DOCX export failed:', result.error)
+    }
+  }, [buildExportPayload])
+
   React.useEffect(() => {
     menuHandlersRef.current = {
       open: handleOpenRequest,
@@ -313,8 +422,10 @@ function App() {
       openFile: handleOpenFileRequest,
       copyMarkdown: handleCopyMarkdownExport,
       copyHtml: handleCopyHtmlExport,
+      exportPdf: handlePdfExport,
+      exportDocx: handleDocxExport,
     }
-  }, [handleCopyHtmlExport, handleCopyMarkdownExport, handleOpenFileRequest, handleOpenRequest, handleSaveAsRequest, handleSaveRequest])
+  }, [handleCopyHtmlExport, handleCopyMarkdownExport, handleDocxExport, handleOpenFileRequest, handleOpenRequest, handlePdfExport, handleSaveAsRequest, handleSaveRequest])
 
   // Bind Electron menu listeners once; call current handlers through refs.
   React.useEffect(() => {
@@ -325,6 +436,8 @@ function App() {
     const handleOpenFile = (_event: unknown, filePath: string) => void menuHandlersRef.current.openFile(filePath)
     const handleCopyMarkdown = () => void menuHandlersRef.current.copyMarkdown()
     const handleCopyHtml = () => void menuHandlersRef.current.copyHtml()
+    const handleExportPdf = () => void menuHandlersRef.current.exportPdf()
+    const handleExportDocx = () => void menuHandlersRef.current.exportDocx()
 
     window.electronAPI.on('file:new', handleNew)
     window.electronAPI.on('file:open-request', handleOpen)
@@ -333,6 +446,15 @@ function App() {
     window.electronAPI.on('file:open-file', handleOpenFile)
     window.electronAPI.on('export:copy-markdown', handleCopyMarkdown)
     window.electronAPI.on('export:copy-html', handleCopyHtml)
+    window.electronAPI.on('export:pdf-request', handleExportPdf)
+    window.electronAPI.on('export:docx-request', handleExportDocx)
+
+    void (async () => {
+      const filePaths = await window.electronAPI.file.consumeOpenFiles()
+      for (const filePath of filePaths) {
+        await menuHandlersRef.current.openFile(filePath)
+      }
+    })()
 
     return () => {
       window.electronAPI.removeListener('file:new', handleNew)
@@ -342,6 +464,8 @@ function App() {
       window.electronAPI.removeListener('file:open-file', handleOpenFile)
       window.electronAPI.removeListener('export:copy-markdown', handleCopyMarkdown)
       window.electronAPI.removeListener('export:copy-html', handleCopyHtml)
+      window.electronAPI.removeListener('export:pdf-request', handleExportPdf)
+      window.electronAPI.removeListener('export:docx-request', handleExportDocx)
     }
   }, [addTab])
 
@@ -350,12 +474,13 @@ function App() {
     { id: 'open', label: 'Open file', hint: 'Choose a Markdown file', run: handleOpenRequest },
     { id: 'save', label: 'Save file', hint: 'Persist the active tab', run: handleSaveRequest },
     { id: 'preview', label: 'Toggle preview', hint: 'Show or hide preview panel', run: togglePreview },
+    { id: 'editor', label: showEditor ? 'Hide editor' : 'Show editor', hint: showEditor ? 'Keep navigation and preview visible' : 'Restore the editing pane', run: toggleEditor },
     { id: 'focus', label: 'Focus mode', hint: 'Hide workspace chrome', run: toggleFocusMode },
     { id: 'theme', label: 'Toggle theme', hint: 'Switch visual theme', run: toggleTheme },
   ]
 
   return (
-    <div className={`app-container ${isFocusMode ? 'focus-mode' : ''}`}>
+    <div className={`app-container ${isFocusMode ? 'focus-mode' : ''} ${isDraggingFile ? 'dragging-file' : ''}`}>
       {!isFocusMode && (
         <TopAppBar
           onNewFile={handleNewTab}
@@ -363,7 +488,7 @@ function App() {
           onSaveFile={handleSaveRequest}
         />
       )}
-      <div className="workspace-main">
+      <div className={`workspace-main ${isPreviewMaximized ? 'preview-maximized' : ''} ${!showEditor ? 'preview-only' : ''}`}>
         {showSidebar && !isFocusMode && <WorkspaceSidebar />}
         {!showSidebar && !isFocusMode && (
           <button className="sidebar-reopen" onClick={toggleSidebar} title="Show sidebar" aria-label="Show sidebar">
@@ -372,7 +497,7 @@ function App() {
             </svg>
           </button>
         )}
-        <div className={`workspace-center ${!showEditor ? 'hidden' : ''}`}>
+        <div className={`workspace-center ${(!showEditor || isPreviewMaximized) ? 'hidden' : ''}`}>
           {!isFocusMode && <TabBar onNewTab={handleNewTab} />}
           <div className="editor-surface">
             <EditorContainer workspaceMode />
@@ -380,7 +505,7 @@ function App() {
         </div>
         {showInsightPanel && showPreview && !isFocusMode && (
           <>
-            {!isPreviewMaximized && (
+            {showEditor && !isPreviewMaximized && (
               <div
                 className="workspace-preview-resizer"
                 onMouseDown={(event) => {
@@ -392,8 +517,8 @@ function App() {
               </div>
             )}
             <div
-              className={`insight-shell ${!showPreview ? 'compact' : ''}`}
-              style={{ width: isPreviewMaximized ? undefined : `${insightPanelWidth}px` }}
+              className={`insight-shell ${!showPreview ? 'compact' : ''} ${isPreviewMaximized ? 'maximized' : ''} ${!showEditor ? 'preview-only' : ''}`}
+              style={{ width: (isPreviewMaximized || !showEditor) ? undefined : `${insightPanelWidth}px` }}
             >
               <InsightPanel />
             </div>
@@ -402,6 +527,13 @@ function App() {
       </div>
       <CommandPalette commands={commands} />
       <GlobalSearch />
+      {isDraggingFile && (
+        <div className="file-drop-overlay">
+          <div className="file-drop-target">
+            <span>Drop Markdown file to open</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

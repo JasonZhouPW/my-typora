@@ -68,7 +68,15 @@ export const useUIStore = create<UIState>((set) => ({
     showInsightPanel: !state.showPreview,
     isPreviewMaximized: state.showPreview ? false : state.isPreviewMaximized,
   })),
-  toggleEditor: () => set((state) => ({ showEditor: !state.showEditor })),
+  toggleEditor: () => set((state) => {
+    const nextShowEditor = !state.showEditor
+    return {
+      showEditor: nextShowEditor,
+      showPreview: nextShowEditor ? state.showPreview : true,
+      showInsightPanel: nextShowEditor ? state.showInsightPanel : true,
+      isPreviewMaximized: nextShowEditor ? state.isPreviewMaximized : false,
+    }
+  }),
   togglePreviewMaximized: () => set((state) => ({ isPreviewMaximized: !state.isPreviewMaximized, showPreview: true, showInsightPanel: true })),
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
   toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),

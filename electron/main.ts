@@ -1,9 +1,24 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
+import fs from 'fs'
 import path from 'path'
 import { registerFileHandlers } from './fileOperations'
+import { registerExportHandlers } from './exportOperations'
 import { createMenu, updateRecentFilesMenu } from './menu'
 
 let mainWindow: BrowserWindow | null = null
+let pendingExternalFiles: string[] = []
+
+const SUPPORTED_FILE_EXTENSIONS = new Set([
+  '.md',
+  '.markdown',
+  '.mdown',
+  '.mkd',
+  '.mkdn',
+  '.mdwn',
+  '.mdtxt',
+  '.mdtext',
+  '.txt',
+])
 
 // Recent files list (stored in memory for now)
 let recentFiles: string[] = []
@@ -20,6 +35,39 @@ function addToRecentFiles(filePath: string) {
   }
   // Update menu
   updateRecentFilesMenu(recentFiles)
+}
+
+function isSupportedExternalFile(filePath: string): boolean {
+  try {
+    const extension = path.extname(filePath).toLowerCase()
+    return SUPPORTED_FILE_EXTENSIONS.has(extension) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()
+  } catch {
+    return false
+  }
+}
+
+function getExternalFilesFromArgv(argv: string[]): string[] {
+  return argv
+    .filter(arg => !arg.startsWith('-'))
+    .map(arg => path.resolve(arg))
+    .filter(isSupportedExternalFile)
+}
+
+function sendExternalFileToRenderer(filePath: string) {
+  if (!mainWindow || mainWindow.webContents.isLoading()) {
+    pendingExternalFiles.push(filePath)
+    return
+  }
+
+  mainWindow.webContents.send('file:open-file', filePath)
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+function consumePendingExternalFiles(): string[] {
+  const files = [...pendingExternalFiles]
+  pendingExternalFiles = []
+  return files
 }
 
 function createWindow() {
@@ -43,6 +91,32 @@ function createWindow() {
   })
 }
 
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (_event, argv) => {
+    const files = getExternalFilesFromArgv(argv)
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      }
+      mainWindow.focus()
+    } else if (app.isReady()) {
+      createWindow()
+    }
+    files.forEach(sendExternalFileToRenderer)
+  })
+}
+
+app.on('open-file', (event, filePath) => {
+  event.preventDefault()
+  if (isSupportedExternalFile(filePath)) {
+    sendExternalFileToRenderer(filePath)
+  }
+})
+
 // Export function to add file to recent list
 export function addFileToRecent(filePath: string) {
   addToRecentFiles(filePath)
@@ -53,8 +127,11 @@ export function getMainWindow(): BrowserWindow | null {
 }
 
 app.on('ready', () => {
+  pendingExternalFiles.push(...getExternalFilesFromArgv(process.argv))
   createWindow()
   registerFileHandlers()
+  registerExportHandlers()
+  ipcMain.handle('file:consume-open-files', () => consumePendingExternalFiles())
   createMenu()
 })
 

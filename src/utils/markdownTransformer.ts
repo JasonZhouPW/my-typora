@@ -26,6 +26,10 @@ export class MarkdownTransformer {
     return html
   }
 
+  transformForExport(markdown: string): string {
+    return this.md.render(markdown)
+  }
+
   extractMermaidCode(markdown: string): string[] {
     const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g
     const matches = []
