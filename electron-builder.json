@@ -12,7 +12,7 @@
   ],
   "extraResources": [],
   "mac": {
-    "icon": "build/icon.icns",
+    "icon": "build/icon_1024x1024.png",
     "target": [
       {
         "target": "dmg",

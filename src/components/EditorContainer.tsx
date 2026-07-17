@@ -53,7 +53,7 @@ export default function EditorContainer({ workspaceMode = false }: EditorContain
     return 'paragraph'
   }
 
-  const previewHtml = markdownTransformer.transform(content)
+  const previewHtml = markdownTransformer.transform(content, activeTab?.filePath)
   const mermaidCode = markdownTransformer.extractMermaidCode(content)
 
   const handleMouseDown = (e: React.MouseEvent) => {

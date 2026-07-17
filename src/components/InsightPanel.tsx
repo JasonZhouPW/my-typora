@@ -14,7 +14,7 @@ export default function InsightPanel() {
   const activeTab = getActiveTab()
   const [previewScale, setPreviewScale] = React.useState(1)
   const content = activeTab?.content ?? ''
-  const previewHtml = markdownTransformer.transform(content)
+  const previewHtml = markdownTransformer.transform(content, activeTab?.filePath)
   const mermaidCode = markdownTransformer.extractMermaidCode(content)
 
   React.useEffect(() => {

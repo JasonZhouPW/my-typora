@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import { registerFileHandlers } from './fileOperations'
@@ -7,6 +7,13 @@ import { createMenu, updateRecentFilesMenu } from './menu'
 
 let mainWindow: BrowserWindow | null = null
 let pendingExternalFiles: string[] = []
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'typra-local',
+    privileges: { standard: true, secure: true, supportFetchAPI: true },
+  },
+])
 
 const SUPPORTED_FILE_EXTENSIONS = new Set([
   '.md',
@@ -127,6 +134,18 @@ export function getMainWindow(): BrowserWindow | null {
 }
 
 app.on('ready', () => {
+  protocol.registerFileProtocol('typra-local', (request, callback) => {
+    try {
+      const requestUrl = new URL(request.url)
+      if (requestUrl.hostname !== 'asset') {
+        callback({ error: -6 })
+        return
+      }
+      callback({ path: decodeURIComponent(requestUrl.pathname.slice(1)) })
+    } catch {
+      callback({ error: -300 })
+    }
+  })
   pendingExternalFiles.push(...getExternalFilesFromArgv(process.argv))
   createWindow()
   registerFileHandlers()
